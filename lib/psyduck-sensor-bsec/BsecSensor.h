@@ -8,6 +8,9 @@
 #include <arduino-timer.h>
 #include "BsecSettings.h"
 
+using psyduck::base::Logger;
+using psyduck::sensors::ITemperatureAndHumidity;
+using psyduck::base::Psyduck;
 using namespace psyduck::homie;
 
 namespace psyduck
@@ -16,16 +19,25 @@ namespace psyduck
   {
     namespace bsec
     {
-
       class BsecSensor : public ITemperatureAndHumidity
       {
       public:
-        BsecSensor(Timer<> *timer, HomieDevice *device);
+        BsecSensor(Psyduck *psyduck);
 
-        Bsec bsec;
+        float getTemperature() override;
+        float getHumidity() override;
+
         friend bool sensorTimerTick(void *);
 
       private:
+        Bsec bsec;
+        Logger *logger;
+        short maxAccuracy = 0;
+        unsigned long lastSave = 0;
+
+        const int SENSOR_READ_INTERVAL = 3000;
+        const int SENSOR_STATE_SAVE_INTERVAL_MINUTES = 300;
+
         void read();
         void checkBsecStatus();
 

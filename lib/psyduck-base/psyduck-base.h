@@ -2,20 +2,10 @@
 #define _PSYDUCK_BASE_H
 
 #include "Settings.h"
-#include "LocalWifi.h"
 #include "serial.h"
 #include "Logger.h"
+#include "StatusLight.h"
 #include "Timer.h"
-
-namespace psyduck
-{
-  namespace base
-  {
-    void setup()
-    {
-      psyduck::base::serial::setup();
-    }
-  }
-}
+#include "Psyduck.h"
 
 #endif

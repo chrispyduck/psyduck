@@ -1,7 +1,8 @@
-#include "Bsec.h"
+#include "BsecSensor.h"
 #include <math.h>
 #include <Wire.h>
 
+using psyduck::base::Psyduck;
 using namespace psyduck::homie;
 
 namespace psyduck
@@ -10,6 +11,26 @@ namespace psyduck
   {
     namespace bsec
     {
+      const char *formatAccuracyValue(uint8_t value)
+      {
+        if (value == 0)
+        {
+          return "UNRELIABLE";
+        }
+        else if (value == 1)
+        {
+          return "LOW";
+        }
+        else if (value == 2)
+        {
+          return "MEDIUM";
+        }
+        else if (value == 3)
+        {
+          return "HIGH";
+        }
+        return "UNKNOWN";
+      }
 
       const uint8_t bsec_config_iaq[] = {
 #include "config/generic_33v_3s_4d/bsec_iaq.txt"
@@ -27,9 +48,11 @@ namespace psyduck
           BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
       };
 
-      BsecSensor::BsecSensor(Timer<> *timer, HomieDevice *device)
+      BsecSensor::BsecSensor(Psyduck *psyduck)
       {
-        this->bsecNode = new HomieNode(device, "environment", "Environment", "environment");
+        this->logger = new Logger(__FILE__);
+
+        this->bsecNode = new HomieNode(psyduck->getHomieDevice(), "environment", "Environment", "environment");
 
         this->temperatureProperty = new HomieProperty(this->bsecNode, "temperature", "Temperature", "float");
         this->temperatureProperty->setUnit("°F");
@@ -58,9 +81,9 @@ namespace psyduck
         this->iaqAccuracyProperty = new HomieProperty(this->bsecNode, "iaqAccuracy", "Air Quality Accuracy", "enum");
         this->iaqAccuracyProperty->setFormat("UNRELIABLE,LOW,MEDIUM,HIGH");
 
-        timer->every(SENSOR_READ_INTERVAL, &sensorTimerTick);
+        Timers::every(SENSOR_READ_INTERVAL, &sensorTimerTick, this);
 
-        Log.noticeln("BSEC library version %d.%d.%d.%d",
+        this->logger->info("BSEC library version %d.%d.%d.%d",
                      this->bsec.version.major,
                      this->bsec.version.minor,
                      this->bsec.version.major_bugfix,
@@ -78,7 +101,7 @@ namespace psyduck
         this->bsec.setState(state);
         if (this->bsec.status != 0)
         {
-          Log.warningln("Failed to load persisted state: %d", this->bsec.status);
+          this->logger->warn("Failed to load persisted state: %d", this->bsec.status);
           this->bsec.setState(defaultState);
           this->checkBsecStatus();
           std::copy(defaultState, defaultState + BSEC_MAX_STATE_BLOB_SIZE, state);
@@ -90,62 +113,66 @@ namespace psyduck
         this->checkBsecStatus();
       }
 
-      void Bsec::read()
+      void BsecSensor::read()
       {
-        auto currentTemp = sensors.bsec.temperature * 9 / 5 + 32;
-        auto currentHumidity = sensors.bsec.humidity;
-
-        this->temperatureProperty->setValue(currentTemp);
-        this->humidityProperty->setValue(currentHumidity);
-        this->pressureProperty->setValue(sensors.bsec.pressure);
-        this->co2Property->setValue(sensors.bsec.co2Equivalent);
-        this->co2AccuracyProperty->setValue(formatAccuracyValue(sensors.bsec.co2Accuracy));
-        this->vocProperty->setValue(sensors.bsec.breathVocEquivalent);
-        this->vocAccuracyProperty->setValue(formatAccuracyValue(sensors.bsec.breathVocAccuracy));
-        this->iaqProperty->setValue(sensors.bsec.staticIaq);
-        this->iaqAccuracyProperty->setValue(formatAccuracyValue(sensors.bsec.staticIaqAccuracy));
-      }
-
-      bool sensorTimerTick(void *)
-      {
-        if (!sensors.bsec.run())
+        if (!this->bsec.run())
         {
           checkBsecStatus();
         }
         else
         {
           // read successful; print info
-          Log.noticeln("ts=%d: temp=%FC %FF, raw temp=%FC %FF, hum=%F, raw hum=%F, pres=%F, staticIaq=%F (acc=%d), co2=%F (acc=%d), bvoc=%F (acc=%d)",
-                       sensors.bsec.outputTimestamp,
-                       sensors.bsec.temperature,
-                       sensors.bsec.temperature * 9 / 5 + 32,
-                       sensors.bsec.rawTemperature,
-                       sensors.bsec.rawTemperature * 9 / 5 + 32,
-                       sensors.bsec.humidity,
-                       sensors.bsec.rawHumidity,
-                       sensors.bsec.pressure,
-                       sensors.bsec.staticIaq,
-                       sensors.bsec.staticIaqAccuracy,
-                       sensors.bsec.co2Equivalent,
-                       sensors.bsec.co2Accuracy,
-                       sensors.bsec.breathVocEquivalent,
-                       sensors.bsec.breathVocAccuracy);
+          this->logger->info("ts=%d: temp=%FC %FF, raw temp=%FC %FF, hum=%F, raw hum=%F, pres=%F, staticIaq=%F (acc=%d), co2=%F (acc=%d), bvoc=%F (acc=%d)",
+                       this->bsec.outputTimestamp,
+                       this->bsec.temperature,
+                       this->bsec.temperature * 9 / 5 + 32,
+                       this->bsec.rawTemperature,
+                       this->bsec.rawTemperature * 9 / 5 + 32,
+                       this->bsec.humidity,
+                       this->bsec.rawHumidity,
+                       this->bsec.pressure,
+                       this->bsec.staticIaq,
+                       this->bsec.staticIaqAccuracy,
+                       this->bsec.co2Equivalent,
+                       this->bsec.co2Accuracy,
+                       this->bsec.breathVocEquivalent,
+                       this->bsec.breathVocAccuracy);
 
-          if ((sensors.bsec.staticIaqAccuracy == 3 && (sensors.maxAccuracy < 3) || (millis() - sensors.lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES))
+          if ((this->bsec.staticIaqAccuracy == 3 && (this->maxAccuracy < 3) || (millis() - this->lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES))
           {
-            Log.noticeln("Saving BSEC algorithm state");
+            this->logger->info("Saving BSEC algorithm state");
             uint8_t *state = settings.getBsecState();
-            sensors.bsec.getState(state);
+            this->bsec.getState(state);
             settings.save();
-            sensors.lastSave = millis();
+            this->lastSave = millis();
           }
 
-          if (sensors.maxAccuracy < sensors.bsec.staticIaqAccuracy)
+          if (this->maxAccuracy < this->bsec.staticIaqAccuracy)
           {
-            Log.noticeln("Achieved new maximum accuracy: %d", sensors.bsec.staticIaqAccuracy);
-            sensors.maxAccuracy = sensors.bsec.staticIaqAccuracy;
+            this->logger->info("Achieved new maximum accuracy: %d", this->bsec.staticIaqAccuracy);
+            this->maxAccuracy = this->bsec.staticIaqAccuracy;
           }
         }
+
+        auto currentTemp = this->bsec.temperature * 9 / 5 + 32;
+        auto currentHumidity = this->bsec.humidity;
+
+        this->temperatureProperty->setValue(currentTemp);
+        this->humidityProperty->setValue(currentHumidity);
+        this->pressureProperty->setValue(this->bsec.pressure);
+        this->co2Property->setValue(this->bsec.co2Equivalent);
+        this->co2AccuracyProperty->setValue(formatAccuracyValue(this->bsec.co2Accuracy));
+        this->vocProperty->setValue(this->bsec.breathVocEquivalent);
+        this->vocAccuracyProperty->setValue(formatAccuracyValue(this->bsec.breathVocAccuracy));
+        this->iaqProperty->setValue(this->bsec.staticIaq);
+        this->iaqAccuracyProperty->setValue(formatAccuracyValue(this->bsec.staticIaqAccuracy));
+      }
+
+      bool sensorTimerTick(void *ref)
+      {
+        BsecSensor *sensor = static_cast<BsecSensor*>(ref);
+        sensor->read();
+        
         return true;
       }
 
@@ -153,23 +180,30 @@ namespace psyduck
       {
         if (this->bsec.status < BSEC_OK)
         {
-          Serial.println("BSEC error code : " + String(this->bsec.status));
-          gpio.activateFaultState(); /* Halt in case of failure */
+          this->logger->error("BSEC error code: %d", this->bsec.status);
+          //gpio.activateFaultState(); /* Halt in case of failure */
         }
         else if (this->bsec.status > BSEC_OK)
         {
-          Serial.println("BSEC warning code : " + String(this->bsec.status));
+          this->logger->error("BSEC warning code: %d", this->bsec.status);
         }
 
         if (this->bsec.bme680Status < BME680_OK)
         {
-          Serial.println("BME68X error code : " + String(this->bsec.bme680Status));
-          gpio.activateFaultState(); /* Halt in case of failure */
+          this->logger->error("BME68X error code: %d", this->bsec.bme680Status);
+          //gpio.activateFaultState(); /* Halt in case of failure */
         }
         else if (this->bsec.bme680Status > BME680_OK)
         {
-          Serial.println("BME68X warning code : " + String(this->bsec.bme680Status));
+          this->logger->error("BME68X warning code: %d", this->bsec.bme680Status);
         }
+      }
+
+      float BsecSensor::getTemperature() {
+        return this->bsec.temperature;
+      }
+      float BsecSensor::getHumidity() {
+        return this->bsec.humidity;
       }
     }
   }

@@ -21,7 +21,7 @@ namespace psyduck
       {
 
       public:
-        Thermostat(Timer<> *timer, HomieDevice *device, ITemperatureAndHumidity *sensor);
+        Thermostat(psyduck::base::Psyduck* main, ITemperatureAndHumidity *sensor);
 
         void checkThermostat();
 

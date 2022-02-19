@@ -10,38 +10,12 @@ namespace psyduck
   {
     namespace thermostat
     {
-
-      const char *formatAccuracyValue(uint8_t value)
-      {
-        if (value == 0)
-        {
-          return "UNRELIABLE";
-        }
-        else if (value == 1)
-        {
-          return "LOW";
-        }
-        else if (value == 2)
-        {
-          return "MEDIUM";
-        }
-        else if (value == 3)
-        {
-          return "HIGH";
-        }
-        return "UNKNOWN";
-      }
-
-      Thermostat::Thermostat(Timer<> *timer, HomieDevice *device, ITemperatureAndHumidity *sensor)
+      Thermostat::Thermostat(psyduck::base::Psyduck* main, ITemperatureAndHumidity *sensor)
       {
         this->logger = new Logger(__FILE__);
-
         this->sensor = sensor;
-        this->timer = timer;
-        //this->client = client;
 
-        //device = new HomieDevice(this->timer, this->client, "sunroom-thermostat", "Sunroom Thermostat");
-        this->thermostatNode = new HomieNode(device, "thermostat", "Thermostat", "thermostat");
+        this->thermostatNode = new HomieNode(main->getHomieDevice(), "thermostat", "Thermostat", "thermostat");
 
         this->fanOnProperty = new HomieProperty(this->thermostatNode, "fanOn", "Fan On", "boolean");
         this->fanOnProperty->setSettable(
