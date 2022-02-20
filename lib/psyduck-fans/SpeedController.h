@@ -34,8 +34,6 @@ namespace psyduck
       HomieProperty* dutyCycleProperty;
       byte dutyCycle;
 
-      
-
       static bool tick(void*);
     };
   }

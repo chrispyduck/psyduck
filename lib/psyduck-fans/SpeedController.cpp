@@ -30,9 +30,10 @@ namespace psyduck
     void SpeedController::computeDutyCycle()
     {
       float temp = this->temperatureSensor->getTemperature();
-      if (temp < -40 || temp > 85)
+      if (temp < 0 || temp > 185)
       {
         this->logger->warn("Temperature value of %f is out of range. Ignoring.", temp);
+        temp = 185;
       }
 
       if (temp < this->config.minSpeedTemperature)
@@ -45,7 +46,7 @@ namespace psyduck
       float dutyCyclePct = (float)this->dutyCycle / 255.0 * 100;
       this->logger->debug("temp=%f, duty cycle=%i, duty cycle pct=%f", temp, this->dutyCycle, dutyCyclePct);
       this->dutyCycleProperty->setValue(dutyCyclePct, 1);
-      ledcWrite(0, this->dutyCycle);
+      ledcWrite(1, this->dutyCycle);
     }
 
     HomieNode* SpeedController::getHomieNode() {

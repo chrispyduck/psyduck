@@ -4,8 +4,9 @@
 #include <psyduck-fans.h>
 
 #define PIN_PWM 13
-#define PIN_TACH1 22
+#define PIN_TACH1 27
 #define PIN_TACH2 33
+#define COMPUTE_INTERVAL 5000
 
 psyduck::Psyduck *main;
 psyduck::PsyduckConfig config;
@@ -71,7 +72,7 @@ void loop()
   main->getEspMQTTClient()->loop();
   Timers::tick();
 
-  if (millis() - lastProcess > 30000)
+  if (millis() - lastProcess > COMPUTE_INTERVAL)
   {
     compute();
   }
