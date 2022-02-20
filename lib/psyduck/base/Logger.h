@@ -5,6 +5,8 @@
 #define LOGGING_DEVICE Serial
 #endif
 
+#include <Arduino.h>
+
 namespace psyduck
 {
   namespace base
@@ -15,9 +17,13 @@ namespace psyduck
       Logger(const char *source);
 
       void info(const char *format, ...);
+      void info(const __FlashStringHelper *format, ...);
       void warn(const char *format, ...);
+      void warn(const __FlashStringHelper *format, ...);
       void error(const char *format, ...);
+      void error(const __FlashStringHelper *format, ...);
       void debug(const char *format, ...);
+      void debug(const __FlashStringHelper *format, ...);
 
     private:
       const char *source;

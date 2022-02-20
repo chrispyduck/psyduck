@@ -5,11 +5,13 @@
 #define ARDUINO 100
 #endif
 
-#include <arduino-timer.h>
+#include "arduino-timer.h"
+//#include <ESP32_New_TimerInterrupt.h>
 
 namespace
 {
-  auto baseTimer = timer_create_default();
+  Timer<15, millis> baseTimer;
+  //ESP32Timer ITimer(1);
 }
 
 namespace psyduck
@@ -44,7 +46,12 @@ namespace psyduck
 
       static void tick()
       {
-        baseTimer.tick();
+        baseTimer.tick(); 
+      }
+
+      static int size()
+      {
+        return baseTimer.size();
       }
     };
   }

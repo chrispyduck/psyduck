@@ -1,7 +1,4 @@
-#include "HomieDevice.h"
-#include "HomieNode.h"
-#include <psyduck-base.h>
-#include <EspMQTTClient.h>
+#include "homie-declarations.h"
 
 #define CONST_CONCAT(a, b) a b
 
@@ -11,6 +8,14 @@ namespace psyduck
 {
   namespace homie
   {
+    const char *HomieDeviceStatusStringMap[] = {
+        "init",
+        "ready",
+        "disconnected",
+        "sleeping",
+        "lost",
+        "alert"};
+
     HomieDevice::HomieDevice(EspMQTTClient *client, const char *id, const char *name)
     {
       this->logger = new Logger((std::string("HomieDevice:") + id).c_str());
@@ -23,6 +28,8 @@ namespace psyduck
       strcat(this->mqttPath, "/");
       strcat(this->mqttPath, id);
       strcat(this->mqttPath, "/");
+
+      Timers::every(STATS_INTERVAL * 1000, HomieDevice::publishStatsTimerTick, this);
     }
 
     void HomieDevice::publish()
@@ -33,7 +40,7 @@ namespace psyduck
       this->publishAttribute("$fw/name", this->name);
       this->publishAttribute("$fw/version", "0.1");
       this->publishAttribute("$implementation", "arduino+esp");
-      this->publishAttribute("$stats", "uptime,rssi,connectionEstablishedCount");
+      this->publishAttribute("$stats", "uptime,rssi,connectionEstablishedCount,timerCount");
       this->publishAttribute("$stats/interval", String(STATS_INTERVAL));
 
       char topic[strlen(name) + 7];
@@ -59,8 +66,9 @@ namespace psyduck
       this->publishAttribute("$nodes", nodeNames);
     }
 
-    bool publishStatsTimerTick(void *deviceVoid)
+    bool HomieDevice::publishStatsTimerTick(void *deviceVoid)
     {
+      Serial.write("publishStatsTimerTick()\n");
       HomieDevice *device = static_cast<HomieDevice *>(deviceVoid);
       device->publishStats();
       return true;
@@ -83,6 +91,7 @@ namespace psyduck
       this->publishAttribute("$stats/uptime", String(millis()), false);
       this->publishAttribute("$stats/rssi", String(WiFi.RSSI()), false);
       this->publishAttribute("$stats/connectionEstablishedCount", String(this->client->getConnectionEstablishedCount()), false);
+      this->publishAttribute("$stats/timerCount", String(Timers::size()), false);
     }
 
     void HomieDevice::setStatus(HomieDeviceStatus status)

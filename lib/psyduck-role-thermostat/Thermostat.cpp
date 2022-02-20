@@ -10,10 +10,14 @@ namespace psyduck
   {
     namespace thermostat
     {
-      Thermostat::Thermostat(psyduck::base::Psyduck* main, ITemperatureAndHumidity *sensor)
+      Thermostat::Thermostat(
+        psyduck::Psyduck* main, 
+        ITemperatureAndHumidity *sensor,
+        ThermostatHardwareConfiguration hardwareConfiguration)
       {
         this->logger = new Logger(__FILE__);
         this->sensor = sensor;
+        this->hardwareConfiguration = hardwareConfiguration;
 
         this->thermostatNode = new HomieNode(main->getHomieDevice(), "thermostat", "Thermostat", "thermostat");
 
@@ -120,12 +124,11 @@ namespace psyduck
           desiredFanSetting = true;
         }
 
-        if (desiredHeatSetting != gpio.isHeatOn() || this->firstRun)
+        if (desiredHeatSetting != this->gpioState.heatOn || this->firstRun)
         {
-          if (!desiredHeatSetting && gpio.isHeatOn())
+          if (!desiredHeatSetting && this->gpioState.heatOn)
             this->lastHeatOff = millis();
-          gpio.setHeatOn(desiredHeatSetting);
-          gpio.setRedOn(desiredHeatSetting);
+          this->setHeatOn(desiredHeatSetting);
           this->heatOnProperty->setValue(desiredHeatSetting ? "true" : "false");
         }
 
@@ -133,9 +136,9 @@ namespace psyduck
           desiredFanSetting = true;
         else if (millis() - this->lastHeatOff < this->settings.getFanDurationAfterHeat() * 60000)
           desiredFanSetting = true; // leave fan on for 5 minutes after turning off heat
-        if (desiredFanSetting != gpio.isFanOn() || this->firstRun)
+        if (desiredFanSetting != this->gpioState.fanOn || this->firstRun)
         {
-          gpio.setFanOn(desiredFanSetting);
+          this->setFanOn(desiredFanSetting);
           this->fanOnProperty->setValue(desiredFanSetting ? "true" : "false");
         }
 
@@ -145,6 +148,14 @@ namespace psyduck
                      setPoint,
                      this->settings.getFanOn());
         this->firstRun = false;
+      }
+
+      void Thermostat::setFanOn(bool desiredState) {
+        psyduck::gpio::GPIO::setSwitch(this->hardwareConfiguration.fanOn, desiredState);
+      }
+
+      void Thermostat::setHeatOn(bool desiredState) {
+        psyduck::gpio::GPIO::setSwitch(this->hardwareConfiguration.heatOn, desiredState);
       }
     }
   }

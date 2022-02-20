@@ -1,14 +1,13 @@
 #ifndef THERMOSTAT_H
 #define THERMOSTAT_H
 
-#include <psyduck-base.h>
-#include <psyduck-homie.h>
-#include <psyduck-sensor-interfaces.h>
+#include <Psyduck.h>
 #include "ThermostatSettings.h"
 
 using psyduck::base::Logger;
 using psyduck::sensors::ITemperatureAndHumidity;
 using namespace psyduck::homie;
+using namespace psyduck::gpio;
 
 namespace psyduck
 {
@@ -16,16 +15,30 @@ namespace psyduck
   {
     namespace thermostat
     {
+      struct ThermostatHardwareConfiguration {
+        GpioLatchingSwitch heatOn;
+        GpioLatchingSwitch fanOn;
+      };
+
+      struct ThermostatGpioState {
+        bool heatOn;
+        bool fanOn;
+      };
 
       class Thermostat
       {
 
       public:
-        Thermostat(psyduck::base::Psyduck* main, ITemperatureAndHumidity *sensor);
+        Thermostat(
+          psyduck::Psyduck* main, 
+          ITemperatureAndHumidity *sensor,
+          ThermostatHardwareConfiguration hardwareConfig);
 
         void checkThermostat();
 
       private:
+        ThermostatHardwareConfiguration hardwareConfiguration;
+        ThermostatGpioState gpioState;
         Logger *logger;
         ITemperatureAndHumidity *sensor;
         Timer<> *timer;
@@ -42,6 +55,9 @@ namespace psyduck
         
         bool firstRun = true;
         unsigned long int lastHeatOff = 0;
+
+        void setFanOn(bool desiredState);
+        void setHeatOn(bool desiredState);
       };
 
     }

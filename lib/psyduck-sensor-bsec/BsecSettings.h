@@ -1,7 +1,7 @@
 #ifndef BSEC_SETTINGS_H
 #define BSEC_SETTINGS_H
 
-#include <psyduck-base.h>
+#include <Psyduck.h>
 #include <bsec.h>
 
 using psyduck::base::SettingsInstance;
@@ -24,6 +24,9 @@ namespace psyduck
       public:
         BsecSettings();
         uint8_t *getBsecState();
+
+      private:
+        BsecData data;
       };
     }
   }

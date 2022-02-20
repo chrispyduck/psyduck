@@ -1,16 +1,13 @@
 #ifndef CHRISPYDUCK_SENSOR_BSEC_H
 #define CHRISPYDUCK_SENSOR_BSEC_H
 
-#include <psyduck-base.h>
-#include <psyduck-homie.h>
-#include <psyduck-sensor-interfaces.h>
+#include <Psyduck.h>
 #include <bsec.h>
-#include <arduino-timer.h>
 #include "BsecSettings.h"
 
 using psyduck::base::Logger;
 using psyduck::sensors::ITemperatureAndHumidity;
-using psyduck::base::Psyduck;
+using psyduck::Psyduck;
 using namespace psyduck::homie;
 
 namespace psyduck

@@ -1,7 +1,7 @@
 #ifndef THERMOSTAT_SETTINGS_H
 #define THERMOSTAT_SETTINGS_H
 
-#include <psyduck-base.h>
+#include <Psyduck.h>
 
 using namespace psyduck::base;
 

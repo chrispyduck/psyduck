@@ -12,11 +12,13 @@ namespace psyduck
       {
         for (int i = 0; i < BSEC_MAX_STATE_BLOB_SIZE; i++)
         {
-          this->data[i] = 0;
+          this->bsecState[i] = 0;
         }
       }
 
-      BsecSettings::BsecSettings() {}
+      BsecSettings::BsecSettings() {
+        
+      }
 
       uint8_t *BsecSettings::getBsecState()
       {

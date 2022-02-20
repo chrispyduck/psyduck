@@ -1,4 +1,4 @@
-#include "HomieNode.h"
+#include "homie-declarations.h"
 
 using psyduck::base::Logger;
 

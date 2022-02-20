@@ -1,5 +1,4 @@
-#include "HomieProperty.h"
-#include <psyduck-base.h>
+#include "homie-declarations.h"
 
 using psyduck::base::Logger;
 
@@ -44,8 +43,8 @@ namespace psyduck
       if (this->unit != 0)
         this->publishAttribute("$unit", this->unit);
 
-      if (this->value.length() > 0)
-        this->getMqttClient()->publish(this->mqttPath, this->value, true);
+      if (this->value != NULL)
+        this->getMqttClient()->publish(this->mqttPath, *this->value, true);
 
       if (this->settable)
       {
@@ -63,20 +62,35 @@ namespace psyduck
       }
     }
 
-    void HomieProperty::setValue(String value)
+    void HomieProperty::setValue(String* value)
     {
+      if (this->value != NULL) {
+        delete this->value;
+      }
       this->value = value;
-      this->getMqttClient()->publish(this->mqttPath, value, true);
+      this->getMqttClient()->publish(this->mqttPath, *value, true);
     }
 
     void HomieProperty::setValue(float value, uint8_t precision)
     {
-      this->setValue(String(value, precision));
+      this->setValue(new String(value, precision));
+      /*
+      this->logger->debug("value=%d, precision=%d", value, precision);
+      char buf[15];
+      dtostrf(value, (precision + 2), precision, buf);
+      this->logger->debug("buf=%s", buf);
+      auto val = new String(buf);
+      this->logger->debug("val=%d, *val=%d", val, *val);
+      this->setValue(val);*/
     }
 
     void HomieProperty::setValue(int value)
     {
-      this->setValue(String(value));
+      this->setValue(new String(value));
+    }
+
+    const char* HomieProperty::getValue() {
+      return this->value->c_str();
     }
 
     void HomieProperty::publishAttribute(const char *name, String value, bool retain)
