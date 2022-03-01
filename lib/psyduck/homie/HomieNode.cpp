@@ -8,8 +8,6 @@ namespace psyduck
   {
     HomieNode::HomieNode(HomieDevice *device, const char *id, const char *name, const char *type)
     {
-      this->logger = new Logger((std::string("HomieNode:") + id).c_str());
-
       this->id = id;
       this->name = name;
       this->type = type;
@@ -19,6 +17,8 @@ namespace psyduck
       strcpy(this->mqttPath, device->getMqttPath());
       strcat(this->mqttPath, this->id);
       strcat(this->mqttPath, "/");
+
+      this->logger = new Logger(this->mqttPath);
 
       device->registerNode(this);
     }
@@ -30,6 +30,8 @@ namespace psyduck
 
     void HomieNode::publish()
     {
+      this->logger->debug("publishing");
+
       this->publishAttribute("$name", this->name);
       this->publishAttribute("$type", this->type);
 

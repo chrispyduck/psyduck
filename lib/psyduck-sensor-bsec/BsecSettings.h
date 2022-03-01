@@ -22,7 +22,6 @@ namespace psyduck
       class BsecSettings : public SettingsInstance<BsecData>
       {
       public:
-        BsecSettings();
         uint8_t *getBsecState();
 
       private:

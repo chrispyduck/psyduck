@@ -58,7 +58,7 @@ namespace psyduck
 
       void publishAttribute(const char *name, String value, bool retain = true);
 
-      static bool publishStatsTimerTick(void*);
+      static bool publishStatsTimerTick(void *);
     };
 
     class HomieNode
@@ -97,10 +97,12 @@ namespace psyduck
       const char *getName();
       const char *getId();
 
-      void setValue(String* value);
+      void setValue(String *value);
       void setValue(int value);
       void setValue(float value, uint8_t precision = 1);
-      const char* getValue();
+      void setValue(char *value);
+      void setValue(const char *value);
+      const char *getValue();
 
       void setUnit(const char *value);
       const char *getUnit();
@@ -110,20 +112,33 @@ namespace psyduck
 
       void setSettable(MessageReceivedCallback callback);
 
+      static HomieProperty *percentage(HomieNode *node, const char *id, const char *name, float currentValue = 0, MessageReceivedCallback setter = nullptr);
+      static HomieProperty *minutes(HomieNode *node, const char *id, const char *name, float currentValue = 0, MessageReceivedCallback setter = nullptr);
+      static HomieProperty *boolean(HomieNode *node, const char *id, const char *name, bool currentValue = false, MessageReceivedCallback setter = nullptr);
+
     private:
       const char *id;
       const char *name;
       const char *type;
-      const char *format = NULL;
-      const char *unit = NULL;
+      const char *format = nullptr;
+      const char *unit = nullptr;
       bool settable = false;
       char *mqttPath;
       HomieNode *node;
-      String *value = NULL;
+      String *value = nullptr;
       MessageReceivedCallback callback;
       char *setterTopic;
 
       Logger *logger;
+
+      static HomieProperty *build(
+          HomieNode *node,
+        const char *id,
+        const char *name,
+        const char *type,
+        const char *unit = nullptr,
+        const char *format = nullptr,
+        MessageReceivedCallback setter = nullptr);
 
     protected:
       void publishAttribute(const char *name, String value, bool retain = true);

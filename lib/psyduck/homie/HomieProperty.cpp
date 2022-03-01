@@ -9,8 +9,6 @@ namespace psyduck
 
     HomieProperty::HomieProperty(HomieNode *node, const char *id, const char *name, const char *datatype)
     {
-      this->logger = new Logger((std::string("HomieProperty:") + id).c_str());
-
       this->id = id;
       this->name = name;
       this->type = datatype;
@@ -19,6 +17,12 @@ namespace psyduck
       this->mqttPath = new char[strlen(id) + strlen(node->getMqttPath()) + 3];
       strcpy(this->mqttPath, node->getMqttPath());
       strcat(this->mqttPath, this->id);
+
+      this->setterTopic = new char[strlen(this->mqttPath) + 6];
+      strcpy(this->setterTopic, this->mqttPath);
+      strcat(this->setterTopic, "/set");
+
+      this->logger = new Logger(this->mqttPath);
 
       node->registerProperty(this);
     }
@@ -35,6 +39,7 @@ namespace psyduck
 
     void HomieProperty::publish()
     {
+      this->logger->debug("publishing");
       this->publishAttribute("$name", this->name);
       this->publishAttribute("$datatype", this->type);
       this->publishAttribute("$settable", this->settable ? "true" : "false");
@@ -43,17 +48,12 @@ namespace psyduck
       if (this->unit != 0)
         this->publishAttribute("$unit", this->unit);
 
-      if (this->value != NULL)
+      if (this->value != nullptr)
         this->getMqttClient()->publish(this->mqttPath, *this->value, true);
 
       if (this->settable)
       {
-        if (this->setterTopic == 0)
-        {
-          this->setterTopic = new char[strlen(this->mqttPath) + 5];
-          strcpy(this->setterTopic, this->mqttPath);
-          strcat(this->setterTopic, "/set");
-        }
+        this->logger->debug("Subscribing to %s", this->setterTopic);
         this->getMqttClient()->subscribe(this->setterTopic, [this](const String &value)
                                          {
                                            this->logger->debug("Received set request on %s", this->setterTopic);
@@ -62,9 +62,10 @@ namespace psyduck
       }
     }
 
-    void HomieProperty::setValue(String* value)
+    void HomieProperty::setValue(String *value)
     {
-      if (this->value != NULL) {
+      if (this->value != nullptr)
+      {
         delete this->value;
       }
       this->value = value;
@@ -74,14 +75,6 @@ namespace psyduck
     void HomieProperty::setValue(float value, uint8_t precision)
     {
       this->setValue(new String(value, precision));
-      /*
-      this->logger->debug("value=%d, precision=%d", value, precision);
-      char buf[15];
-      dtostrf(value, (precision + 2), precision, buf);
-      this->logger->debug("buf=%s", buf);
-      auto val = new String(buf);
-      this->logger->debug("val=%d, *val=%d", val, *val);
-      this->setValue(val);*/
     }
 
     void HomieProperty::setValue(int value)
@@ -89,7 +82,18 @@ namespace psyduck
       this->setValue(new String(value));
     }
 
-    const char* HomieProperty::getValue() {
+    void HomieProperty::setValue(char *value)
+    {
+      this->setValue(new String(value));
+    }
+
+    void HomieProperty::setValue(const char *value)
+    {
+      this->setValue(new String(value));
+    }
+
+    const char *HomieProperty::getValue()
+    {
       return this->value->c_str();
     }
 

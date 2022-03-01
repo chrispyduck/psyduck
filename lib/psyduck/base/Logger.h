@@ -15,6 +15,8 @@ namespace psyduck
     {
     public:
       Logger(const char *source);
+      Logger(const char *sourcePrefix, char* sourcePostfix);
+      Logger(const char *sourcePrefix, const char* sourcePostfix);
 
       void info(const char *format, ...);
       void info(const __FlashStringHelper *format, ...);
@@ -26,7 +28,7 @@ namespace psyduck
       void debug(const __FlashStringHelper *format, ...);
 
     private:
-      const char *source;
+      char *source;
 
       void writePrefix(const char* level);
       void writePostfix();

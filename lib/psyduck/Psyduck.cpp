@@ -15,7 +15,7 @@ namespace psyduck
 
     // prepare configuration
     this->config = config;
-    if (config.mqtt.clientId == NULL)
+    if (config.mqtt.clientId == nullptr)
     {
       config.mqtt.clientId = config.deviceId;
     }
@@ -30,6 +30,7 @@ namespace psyduck
         config.mqtt.clientId,
         config.mqtt.port);
     this->mqttClient->enableDebuggingMessages(true);
+    this->mqttClient->setMaxPacketSize(256);
 
     this->homieDevice = new HomieDevice(
         this->mqttClient,

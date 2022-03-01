@@ -18,7 +18,6 @@ namespace psyduck
 
     HomieDevice::HomieDevice(EspMQTTClient *client, const char *id, const char *name)
     {
-      this->logger = new Logger((std::string("HomieDevice:") + id).c_str());
       this->id = id;
       this->name = name;
       this->client = client;
@@ -29,11 +28,15 @@ namespace psyduck
       strcat(this->mqttPath, id);
       strcat(this->mqttPath, "/");
 
+      this->logger = new Logger(this->mqttPath);
+
       Timers::every(STATS_INTERVAL * 1000, HomieDevice::publishStatsTimerTick, this);
     }
 
     void HomieDevice::publish()
     {
+      this->logger->debug("publishing");
+
       this->setStatus(HOMIE_DEVICE_INIT);
       this->publishAttribute("$homie", HOMIE_VERSION);
       this->publishAttribute("$name", this->name);
