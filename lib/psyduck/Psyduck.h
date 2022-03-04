@@ -20,16 +20,16 @@ namespace psyduck
 {
   struct PsyduckConfigWifi
   {
-    char *ssid;
-    char *password;
+    char *ssid = nullptr;
+    char *password = nullptr;
   };
 
   struct PsyduckConfigMqtt
   {
-    char *server;
-    char *username;
-    char *password;
-    char *clientId;
+    char *server = nullptr;
+    char *username = nullptr;
+    char *password = nullptr;
+    char *clientId = nullptr;
     ushort port = 9001;
   };
 
@@ -37,8 +37,8 @@ namespace psyduck
   {
     PsyduckConfigWifi wifi;
     PsyduckConfigMqtt mqtt;
-    char *deviceId;
-    char *deviceName;
+    char *deviceId = nullptr;
+    char *deviceName = nullptr;
   };
 
   class Psyduck
@@ -60,9 +60,9 @@ namespace psyduck
     void onConnectionEstablished();
 
   private:
-    Logger *logger;
-    EspMQTTClient *mqttClient;
-    HomieDevice *homieDevice;
+    Logger *logger = nullptr;
+    EspMQTTClient *mqttClient = nullptr;
+    HomieDevice *homieDevice = nullptr;
     PsyduckConfig config;
   };
 }

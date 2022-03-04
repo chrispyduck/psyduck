@@ -28,7 +28,7 @@ namespace psyduck
       void debug(const __FlashStringHelper *format, ...);
 
     private:
-      char *source;
+      char *source = nullptr;
 
       void writePrefix(const char* level);
       void writePostfix();

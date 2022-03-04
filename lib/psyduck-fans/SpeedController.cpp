@@ -11,9 +11,8 @@ namespace psyduck
       this->temperatureSensor = temperatureSensor;
 
       this->node = new HomieNode(psyduck->getHomieDevice(), "fans", "Fans", "Fan Speed Monitor and Controller");
-      this->dutyCycleProperty = new HomieProperty(this->node, "duty-cycle", "Duty Cycle", "float");
-      this->dutyCycleProperty->setUnit("%");
-      this->dutyCycleProperty->setFormat("0:100");
+
+      this->dutyCycleProperty = HomieProperty::percentage(this->node, "dutyCycle", "Duty Cycle");
 
       ledcAttachPin(config.pwmGpioPin, 1);
       ledcSetup(1, 16000, 8);

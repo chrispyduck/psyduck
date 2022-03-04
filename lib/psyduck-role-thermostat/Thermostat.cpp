@@ -151,11 +151,11 @@ namespace psyduck
       }
 
       void Thermostat::setFanOn(bool desiredState) {
-        psyduck::gpio::GPIO::setSwitch(this->hardwareConfiguration.fanOn, desiredState);
+        psyduck::gpio::GPIO.setSwitch(this->hardwareConfiguration.fanOn, desiredState);
       }
 
       void Thermostat::setHeatOn(bool desiredState) {
-        psyduck::gpio::GPIO::setSwitch(this->hardwareConfiguration.heatOn, desiredState);
+        psyduck::gpio::GPIO.setSwitch(this->hardwareConfiguration.heatOn, desiredState);
       }
     }
   }

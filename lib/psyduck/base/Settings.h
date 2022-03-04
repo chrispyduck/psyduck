@@ -30,10 +30,10 @@ namespace psyduck
     {
     private:
       int offset = 0;
-      Logger *logger;
+      Logger *logger = nullptr;
 
     protected:
-      TData *data;
+      TData *data = nullptr;
 
     public:
       SettingsInstance()

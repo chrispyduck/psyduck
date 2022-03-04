@@ -47,14 +47,14 @@ namespace psyduck
       EspMQTTClient *getMqttClient();
 
     private:
-      const char *id;
-      const char *name;
-      char *mqttPath;
-      EspMQTTClient *client;
+      const char *id = nullptr;
+      const char *name = nullptr;
+      char *mqttPath = nullptr;
+      EspMQTTClient *client = nullptr;
       LinkedList<HomieNode *> nodes;
       Timers::Task statsTimer;
 
-      Logger *logger;
+      Logger *logger = nullptr;
 
       void publishAttribute(const char *name, String value, bool retain = true);
 
@@ -76,14 +76,14 @@ namespace psyduck
       EspMQTTClient *getMqttClient();
 
     private:
-      const char *id;
-      const char *name;
-      const char *type;
-      char *mqttPath;
+      const char *id = nullptr;
+      const char *name = nullptr;
+      const char *type = nullptr;
+      char *mqttPath = nullptr;
       LinkedList<HomieProperty *> properties;
-      HomieDevice *device;
+      HomieDevice *device = nullptr;
 
-      Logger *logger;
+      Logger *logger = nullptr;
 
       void publishAttribute(const char *name, String value, bool retain = true);
     };
@@ -117,19 +117,19 @@ namespace psyduck
       static HomieProperty *boolean(HomieNode *node, const char *id, const char *name, bool currentValue = false, MessageReceivedCallback setter = nullptr);
 
     private:
-      const char *id;
-      const char *name;
-      const char *type;
+      const char *id = nullptr;
+      const char *name = nullptr;
+      const char *type = nullptr;
       const char *format = nullptr;
       const char *unit = nullptr;
       bool settable = false;
-      char *mqttPath;
-      HomieNode *node;
+      char *mqttPath = nullptr;
+      HomieNode *node = nullptr;
       String *value = nullptr;
       MessageReceivedCallback callback;
-      char *setterTopic;
+      char *setterTopic = nullptr;
 
-      Logger *logger;
+      Logger *logger = nullptr;
 
       static HomieProperty *build(
           HomieNode *node,
