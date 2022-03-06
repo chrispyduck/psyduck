@@ -102,6 +102,7 @@ namespace psyduck
       void setValue(float value, uint8_t precision = 1);
       void setValue(char *value);
       void setValue(const char *value);
+      void setValue(bool value);
       const char *getValue();
 
       void setUnit(const char *value);

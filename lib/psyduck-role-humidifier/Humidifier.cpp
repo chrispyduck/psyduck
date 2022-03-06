@@ -22,13 +22,18 @@ namespace psyduck
 
         this->settings.load();
 
-        this->configNode = new HomieNode(main->getHomieDevice(), "humidifierConfig", "Humidifier Configuration", "humidifierConfig");
-
         pinMode(hardwareConfiguration.atomizerRelayPin, OUTPUT);
+        digitalWrite(hardwareConfiguration.atomizerRelayPin, LOW);
+
         pinMode(hardwareConfiguration.waterLevelLowSensorPin, INPUT_PULLDOWN);
+
         pinMode(hardwareConfiguration.waterValveOpenPin, OUTPUT);
+        digitalWrite(hardwareConfiguration.waterValveOpenPin, LOW);
+
         ledcAttachPin(hardwareConfiguration.fanPwmPin, 1);
         ledcSetup(1, 16000, 8);
+        
+        this->configNode = new HomieNode(main->getHomieDevice(), "humidifierConfig", "Humidifier Configuration", "humidifierConfig");
 
         this->configDesiredHumidityProperty = HomieProperty::percentage(
             this->configNode,
@@ -60,7 +65,7 @@ namespace psyduck
             [this](const String &value)
             {
               auto val = this->settings.setAtomizerMaxDutyCycle(value.toFloat() / 100);
-              this->configAtomizerMaxDutyCycleProperty->setValue(val);
+              this->configAtomizerMaxDutyCycleProperty->setValue(val * 100);
             });
 
         this->configAtomizerMinDutyCycleProperty = HomieProperty::percentage(
@@ -71,7 +76,7 @@ namespace psyduck
             [this](const String &value)
             {
               auto val = this->settings.setAtomizerMinDutyCycle(value.toFloat() / 100);
-              this->configAtomizerMinDutyCycleProperty->setValue(val);
+              this->configAtomizerMinDutyCycleProperty->setValue(val * 100);
             });
 
         this->configFanHighDutyCycleProperty = HomieProperty::percentage(
@@ -82,7 +87,7 @@ namespace psyduck
             [this](const String &value)
             {
               auto val = this->settings.setFanHighDutyCycle(value.toFloat() / 100);
-              this->configFanHighDutyCycleProperty->setValue(val);
+              this->configFanHighDutyCycleProperty->setValue(val * 100);
             });
 
         this->configFanIdleDutyCycleProperty = HomieProperty::percentage(
@@ -93,7 +98,7 @@ namespace psyduck
             [this](const String &value)
             {
               auto val = this->settings.setFanIdleDutyCycle(value.toFloat() / 100);
-              this->configFanIdleDutyCycleProperty->setValue(val);
+              this->configFanIdleDutyCycleProperty->setValue(val * 100);
             });
 
         this->stateNode = new HomieNode(main->getHomieDevice(), "humidifierState", "Humidifier State", "humidifierState");
@@ -128,6 +133,13 @@ namespace psyduck
             "Water Level Low",
             true);
 
+        this->lastAtomizerOn = 0;
+        this->lastAtomizerOff = 0;
+        this->gpioState.waterLevelLowSensor = false;
+        this->gpioState.atomizerRelayActive = false;
+        this->gpioState.fanIsHigh = false;
+        this->gpioState.waterValveOpen = false;
+
         Timers::every(1000, Humidifier::timerTick, this);
       }
 
@@ -153,13 +165,17 @@ namespace psyduck
           return;
         else if (isOpen)
         {
-          digitalWrite(this->gpioState.waterValveOpen, LOW);
+          this->logger->info("Closing water valve");
+          digitalWrite(this->hardwareConfiguration.waterValveOpenPin, LOW);
           this->currentWaterValveStatusProperty->setValue(false);
+          this->gpioState.waterValveOpen = false;
         }
         else if (shouldBeOpen)
         {
-          digitalWrite(this->gpioState.waterValveOpen, HIGH);
+          this->logger->info("Opening water valve");
+          digitalWrite(this->hardwareConfiguration.waterValveOpenPin, HIGH);
           this->currentWaterValveStatusProperty->setValue(true);
+          this->gpioState.waterValveOpen = true;
         }
       }
 
@@ -179,16 +195,18 @@ namespace psyduck
         {
           this->gpioState.fanIsHigh = false;
           this->gpioState.fanDutyCycle = this->settings.getFanIdleDutyCycle() * 255;
-          this->currentFanDutyCycleProperty->setValue(this->gpioState.fanDutyCycle / 255.0f);
-          this->logger->info("Setting fan duty cycle to %x", this->gpioState.fanDutyCycle);
+          float dutyCyclePct = this->gpioState.fanDutyCycle / 255.0f;
+          this->currentFanDutyCycleProperty->setValue(dutyCyclePct * 100);
+          this->logger->info("Setting fan duty cycle to %f", dutyCyclePct);
           ledcWrite(1, this->gpioState.fanDutyCycle);
         }
         else if (fanShouldBeHigh)
         {
           this->gpioState.fanIsHigh = true;
           this->gpioState.fanDutyCycle = this->settings.getFanHighDutyCycle() * 255;
-          this->currentFanDutyCycleProperty->setValue(this->gpioState.fanDutyCycle / 255.0f);
-          this->logger->info("Setting fan duty cycle to %x", this->gpioState.fanDutyCycle);
+          float dutyCyclePct = this->gpioState.fanDutyCycle / 255.0f;
+          this->currentFanDutyCycleProperty->setValue(dutyCyclePct * 100);
+          this->logger->info("Setting fan duty cycle to %f", dutyCyclePct);
           ledcWrite(1, this->gpioState.fanDutyCycle);
         }
       }
@@ -202,6 +220,7 @@ namespace psyduck
         // convert duty cycle to seconds on and off
         auto secondsOn = dutyCycle * 60;
         auto secondsOff = 60 - secondsOn;
+        // this->logger->debug("dutyCycle=%.2f,  secondsOn=%.0f, secondsOff=%.0f", dutyCycle, secondsOn, secondsOff);
 
         if (atomizerOn)
         {
@@ -209,10 +228,11 @@ namespace psyduck
           if ((now - this->lastAtomizerOn) / 1000 > secondsOn)
           {
             // we do
-            this->logger->info("Deactivating atomizer for %is", secondsOff);
+            this->logger->info("Deactivating atomizer for %is", (int)secondsOff);
             this->lastAtomizerOff = now;
             digitalWrite(this->hardwareConfiguration.atomizerRelayPin, LOW);
-            this->currentAtomizerPowerStateProperty->setValue(true);
+            this->currentAtomizerPowerStateProperty->setValue(false);
+            this->gpioState.atomizerRelayActive = false;
           }
         }
         else
@@ -221,10 +241,11 @@ namespace psyduck
           if ((now - this->lastAtomizerOff) / 1000 > secondsOff)
           {
             // we do!
-            this->logger->info("Activating atomizer for %is", secondsOn);
+            this->logger->info("Activating atomizer for %is", (int)secondsOn);
             this->lastAtomizerOn = now;
             digitalWrite(this->hardwareConfiguration.atomizerRelayPin, HIGH);
-            this->currentAtomizerPowerStateProperty->setValue(false);
+            this->currentAtomizerPowerStateProperty->setValue(true);
+            this->gpioState.atomizerRelayActive = true;
           }
         }
       }
@@ -249,6 +270,8 @@ namespace psyduck
 
       float Humidifier::computeAtomizerDutyCycle()
       {
+        static float lastComputedDutyCycle = 0.0f;
+
         // sanity check humidity value
         auto currentHumidity = this->sensor->getHumidity();
         if (currentHumidity >= 100 || currentHumidity <= 0)
@@ -278,11 +301,15 @@ namespace psyduck
         auto atomizerMax = this->settings.getAtomizerMaxDutyCycle();
         auto atomizerMin = this->settings.getAtomizerMinDutyCycle();
         auto atomizerDutyCycle = ((1 - humidityFactor) * (atomizerMax - atomizerMin)) + atomizerMin;
-        this->logger->debug("Computed atomizer duty cycle of %.2f (hFactor=%.2f, RH=%f)",
-                            atomizerDutyCycle,
-                            humidityFactor,
-                            currentHumidity);
-        this->currentAtomizerDutyCycleProperty->setValue(atomizerDutyCycle * 100);
+        if (abs(atomizerDutyCycle - lastComputedDutyCycle) > 0.005)
+        {
+          this->logger->debug("Computed atomizer duty cycle of %.3f (hFactor=%.2f, RH=%f)",
+                              atomizerDutyCycle,
+                              humidityFactor,
+                              currentHumidity);
+          lastComputedDutyCycle = atomizerDutyCycle;
+          this->currentAtomizerDutyCycleProperty->setValue(atomizerDutyCycle * 100);
+        }
         return atomizerDutyCycle;
       }
     }

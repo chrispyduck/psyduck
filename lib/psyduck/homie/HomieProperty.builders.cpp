@@ -32,7 +32,7 @@ namespace psyduck
 
     HomieProperty *HomieProperty::percentage(HomieNode *node, const char *id, const char *name, float currentValue, MessageReceivedCallback setter)
     {
-      auto prop = build(node, id, name, "percentage", "%", "0:100", setter);
+      auto prop = build(node, id, name, "integer", "%", "0:100", setter);
       prop->setValue(currentValue);
       return prop;
     }

@@ -21,8 +21,8 @@ namespace psyduck
       class BsecSensor : public ITemperatureAndHumidity
       {
       public:
-        BsecSensor(Psyduck *psyduck, TwoWire i2cBus);
-        BsecSensor(Psyduck *psyduck, SPIClass spiBus, byte chipSelectPin);
+        BsecSensor(Psyduck *psyduck, TwoWire& i2cBus);
+        BsecSensor(Psyduck *psyduck, SPIClass& spiBus, byte chipSelectPin);
 
         float getTemperature() override;
         float getHumidity() override;
@@ -34,8 +34,8 @@ namespace psyduck
         void initCommon();
         void initHomie(Psyduck *psyduck);
         void initBsecSettings();
-        void initBsecHardware(TwoWire i2cBus);
-        void initBsecHardware(SPIClass spiBus, byte chipSelectPin);
+        void initBsecHardware(TwoWire& i2cBus);
+        void initBsecHardware(SPIClass& spiBus, byte chipSelectPin);
 
         Bsec bsec;
         Logger *logger = nullptr;
@@ -48,7 +48,8 @@ namespace psyduck
 
         void checkBsecStatus();
 
-        static bool sensorTimerTick(void *);
+        static bool sensorTimerTick(void* ref);
+        static void executeSensorTask(void* ref);
 
         BsecSettings settings;
 

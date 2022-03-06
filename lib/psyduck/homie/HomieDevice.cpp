@@ -29,8 +29,6 @@ namespace psyduck
       strcat(this->mqttPath, "/");
 
       this->logger = new Logger(this->mqttPath);
-
-      Timers::every(STATS_INTERVAL * 1000, HomieDevice::publishStatsTimerTick, this);
     }
 
     void HomieDevice::publish()
@@ -71,7 +69,6 @@ namespace psyduck
 
     bool HomieDevice::publishStatsTimerTick(void *deviceVoid)
     {
-      Serial.write("publishStatsTimerTick()\n");
       HomieDevice *device = static_cast<HomieDevice *>(deviceVoid);
       device->publishStats();
       return true;

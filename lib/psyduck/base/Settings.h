@@ -19,6 +19,9 @@ namespace psyduck
     private: 
       static int global_data_offset;
 
+      static void markDirty();
+      static bool autoCommitHoldTimerElapsed(void*);
+
     public:
       static void commit();
 
@@ -65,6 +68,7 @@ namespace psyduck
       {
         this->logger->debug("Saving data to offset %i", this->offset);
         EEPROM.put(this->offset, *this->data);
+        Settings::markDirty();
       }
     };
   }

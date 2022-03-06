@@ -5,5 +5,6 @@
 #include "Logger.h"
 #include "StatusLight.h"
 #include "Timer.h"
+#include "ConnectionStatusLight.h"
 
 #endif

@@ -6,8 +6,12 @@ namespace psyduck {
     void ConnectionStatusLight::timerTick() {
       ConnectionStatus currentStatus;
       // check connection status and update if needed
-      if (!WiFi.isConnected()) {
+      if (!this->getWifiConnected()) {
         currentStatus = STATUS_WIFI_DISCONNECTED;
+      } else if (!this->getMqttConnected()) {
+        currentStatus = STATUS_MQTT_DISCONNECTED;
+      } else {
+        currentStatus = STATUS_ONLINE;
       }
 
       // status changed; update config

@@ -15,6 +15,7 @@
 
 using namespace psyduck::homie;
 using namespace psyduck::sensors;
+using psyduck::base::ConnectionStatusLight;
 
 namespace psyduck
 {
@@ -59,7 +60,12 @@ namespace psyduck
     void activateFaultState();
     void onConnectionEstablished();
 
+    void setConnectionStatusLight(byte ledPin);
+
+    void setDebug(bool enabled);
+
   private:
+    ConnectionStatusLight *connectionStatusLight = nullptr;
     Logger *logger = nullptr;
     EspMQTTClient *mqttClient = nullptr;
     HomieDevice *homieDevice = nullptr;

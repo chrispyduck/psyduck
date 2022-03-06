@@ -1,6 +1,22 @@
 #include "Psyduck.h"
 
 using namespace psyduck::homie;
+using psyduck::base::ConnectionStatusLight;
+
+namespace
+{
+  psyduck::Psyduck *singleton = nullptr;
+
+  void global_onConnectionEstablished()
+  {
+    singleton->onConnectionEstablished();
+  }
+}
+
+void onConnectionEstablished() {
+  Serial.write("ERROR: global onConnectionEstablished called. this should not happen.");
+  throw std::exception();
+}
 
 namespace psyduck
 {
@@ -9,8 +25,17 @@ namespace psyduck
     Serial.begin(115200);
     while (!Serial)
       ;
-    
+
     this->logger = new Logger(__FILE__);
+    if (singleton == nullptr)
+    {
+      singleton = this;
+    }
+    else
+    {
+      this->logger->info(F("Error: another instance of Psyduck already exists"));
+      throw std::exception();
+    }
     this->logger->info(F("Starting..."));
 
     // prepare configuration
@@ -29,8 +54,9 @@ namespace psyduck
         config.mqtt.password,
         config.mqtt.clientId,
         config.mqtt.port);
-    this->mqttClient->enableDebuggingMessages(true);
-    this->mqttClient->setMaxPacketSize(256);
+    this->mqttClient->enableDebuggingMessages(false);
+    this->mqttClient->setMaxPacketSize(512);
+    this->mqttClient->setOnConnectionEstablishedCallback(global_onConnectionEstablished);
 
     this->homieDevice = new HomieDevice(
         this->mqttClient,
@@ -55,6 +81,10 @@ namespace psyduck
     return this->mqttClient;
   }
 
+  void Psyduck::setDebug(bool enabled) {
+    this->mqttClient->enableDebuggingMessages(enabled);
+  }
+
   void Psyduck::onConnectionEstablished()
   {
     this->logger->info(F("Connection established. Publishing homie messages."));
@@ -64,9 +94,17 @@ namespace psyduck
     this->logger->debug(F("Done publishing homie messages"));
   }
 
-  inline void Psyduck::loop()
+  void Psyduck::loop()
   {
     this->mqttClient->loop();
     Timers::tick();
+  }
+
+  void Psyduck::setConnectionStatusLight(byte ledPin)
+  {
+    this->connectionStatusLight = new ConnectionStatusLight(
+      ledPin, 
+      std::bind(&EspMQTTClient::isWifiConnected, this->mqttClient),
+      std::bind(&EspMQTTClient::isMqttConnected, this->mqttClient));
   }
 }

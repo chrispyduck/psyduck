@@ -47,12 +47,12 @@ namespace psyduck
           BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
           BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
 
-          //BSEC_OUTPUT_RUN_IN_STATUS,
-          //BSEC_OUTPUT_STABILIZATION_STATUS,
-          //BSEC_OUTPUT_GAS_PERCENTAGE,
+          // BSEC_OUTPUT_RUN_IN_STATUS,
+          // BSEC_OUTPUT_STABILIZATION_STATUS,
+          // BSEC_OUTPUT_GAS_PERCENTAGE,
       };
 
-      BsecSensor::BsecSensor(Psyduck *psyduck, TwoWire i2cBus)
+      BsecSensor::BsecSensor(Psyduck *psyduck, TwoWire &i2cBus)
       {
         this->initCommon();
         this->initHomie(psyduck);
@@ -60,7 +60,7 @@ namespace psyduck
         this->initBsecSettings();
       }
 
-      BsecSensor::BsecSensor(Psyduck *psyduck, SPIClass spiBus, byte chipSelectPin)
+      BsecSensor::BsecSensor(Psyduck *psyduck, SPIClass &spiBus, byte chipSelectPin)
       {
         this->initCommon();
         this->initHomie(psyduck);
@@ -76,7 +76,7 @@ namespace psyduck
       void BsecSensor::initCommon()
       {
         this->logger = new Logger(__FILE__);
-        //Timers::every(SENSOR_READ_INTERVAL, &BsecSensor::sensorTimerTick, this);
+        Timers::every(SENSOR_READ_INTERVAL, &BsecSensor::sensorTimerTick, this);
       }
 
       void BsecSensor::initHomie(Psyduck *psyduck)
@@ -115,19 +115,20 @@ namespace psyduck
         this->iaqAccuracyProperty->setFormat("UNRELIABLE,LOW,MEDIUM,HIGH");
       }
 
-      void BsecSensor::initBsecHardware(TwoWire i2cBus)
+      void BsecSensor::initBsecHardware(TwoWire &i2cBus)
       {
         this->bsec.begin(BME680_I2C_ADDR_SECONDARY, i2cBus);
         this->checkBsecStatus();
       }
 
-      void BsecSensor::initBsecHardware(SPIClass spiBus, byte chipSelectPin)
+      void BsecSensor::initBsecHardware(SPIClass &spiBus, byte chipSelectPin)
       {
+        spiBus.begin();
         this->bsec.begin(chipSelectPin, spiBus);
         this->checkBsecStatus();
       }
 
-      IRAM_ATTR void BsecSensor::initBsecSettings()
+      void BsecSensor::initBsecSettings()
       {
         this->logger->info("BSEC library version %d.%d.%d.%d",
                            this->bsec.version.major,
@@ -138,20 +139,19 @@ namespace psyduck
         this->bsec.setConfig(bsec_config_iaq);
         this->checkBsecStatus();
 
-        //uint8_t *defaultState = new uint8_t[BSEC_MAX_STATE_BLOB_SIZE];
-        //this->bsec.getState(defaultState);
-        //uint8_t *state = this->settings.getBsecState();
-        //this->bsec.setState(state);
+        uint8_t *defaultState = new uint8_t[BSEC_MAX_STATE_BLOB_SIZE];
+        this->bsec.getState(defaultState);
+        uint8_t *state = this->settings.getBsecState();
+        this->bsec.setState(state);
         if (this->bsec.status != 0)
         {
           this->logger->warn("Failed to load persisted state: %d", this->bsec.status);
-          //this->bsec.setState(defaultState);
+          this->bsec.setState(defaultState);
           this->checkBsecStatus();
-          //this->bsec.
-          //memcpy(state, defaultState, BSEC_MAX_STATE_BLOB_SIZE);
-          //this->settings.save();
+          memcpy(state, defaultState, BSEC_MAX_STATE_BLOB_SIZE);
+          this->settings.save();
         }
-        //delete defaultState;
+        delete defaultState;
 
         this->bsec.updateSubscription(sensorList, sizeof(sensorList) / sizeof(bsec_virtual_sensor_t), BSEC_SAMPLE_RATE_CONTINUOUS);
         this->checkBsecStatus();
@@ -159,7 +159,6 @@ namespace psyduck
 
       IRAM_ATTR void BsecSensor::read()
       {
-        this->logger->debug("Read(): starting");
         if (!this->bsec.run())
         {
           this->logger->debug("Read failed");
@@ -168,7 +167,7 @@ namespace psyduck
         else
         {
           // read successful; print info
-          this->logger->info("ts=%d: temp=%FC %FF, raw temp=%FC %FF, hum=%F, raw hum=%F, pres=%F, staticIaq=%F (acc=%d), co2=%F (acc=%d), bvoc=%F (acc=%d)",
+          this->logger->info("ts=%d: temp=%.1FC %.1FF, raw temp=%.1FC %.1FF, hum=%.1F, raw hum=%.1F, pres=%.0F, staticIaq=%.0F (acc=%d), co2=%.0F (acc=%d), bvoc=%.3F (acc=%d)",
                              this->bsec.outputTimestamp,
                              this->bsec.temperature,
                              this->bsec.temperature * 9 / 5 + 32,
@@ -184,7 +183,7 @@ namespace psyduck
                              this->bsec.breathVocEquivalent,
                              this->bsec.breathVocAccuracy);
 
-          if ((this->bsec.staticIaqAccuracy == 3 && ((this->maxAccuracy < 3) || (millis() - this->lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES)))
+          if ((this->maxAccuracy < this->bsec.staticIaqAccuracy) || ((millis() - this->lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES))
           {
             this->logger->info("Saving BSEC algorithm state");
             uint8_t *state = settings.getBsecState();
@@ -215,14 +214,25 @@ namespace psyduck
             this->iaqAccuracyProperty->setValue(formatAccuracyValue(this->bsec.staticIaqAccuracy));
           }
         }
-        this->logger->debug("Read(): exiting");
       }
 
       bool BsecSensor::sensorTimerTick(void *ref)
       {
-        BsecSensor *sensor = static_cast<BsecSensor *>(ref);
-        sensor->read();
+        xTaskCreate(
+            BsecSensor::executeSensorTask,
+            "bsec:read",
+            10000,
+            ref,
+            2,
+            nullptr);
         return true;
+      }
+
+      void BsecSensor::executeSensorTask(void *ref)
+      {
+        BsecSensor *instance = static_cast<BsecSensor *>(ref);
+        instance->read();
+        vTaskDelete(NULL);
       }
 
       void BsecSensor::checkBsecStatus()

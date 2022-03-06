@@ -82,6 +82,11 @@ namespace psyduck
       this->setValue(new String(value));
     }
 
+    void HomieProperty::setValue(bool value)
+    {
+      this->setValue(new String(value ? "true" : "false"));
+    }
+
     void HomieProperty::setValue(char *value)
     {
       this->setValue(new String(value));
