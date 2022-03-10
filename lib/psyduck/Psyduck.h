@@ -11,7 +11,7 @@
 #include "base/psyduck-base.h"
 #include "homie/psyduck-homie.h"
 #include "sensor-interfaces/psyduck-sensor-interfaces.h"
-#include "gpio/GPIO.h"
+#include "gpio/psyduck-gpio.h"
 
 using namespace psyduck::homie;
 using namespace psyduck::sensors;
@@ -70,6 +70,7 @@ namespace psyduck
     EspMQTTClient *mqttClient = nullptr;
     HomieDevice *homieDevice = nullptr;
     PsyduckConfig config;
+    bool isFaulted = false;
   };
 }
 

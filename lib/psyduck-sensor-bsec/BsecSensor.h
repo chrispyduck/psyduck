@@ -43,7 +43,7 @@ namespace psyduck
         unsigned long lastSave = 0;
         bool ready = false;
 
-        const int SENSOR_READ_INTERVAL = 10000;
+        const int SENSOR_READ_INTERVAL = 3000;
         const int SENSOR_STATE_SAVE_INTERVAL_MINUTES = 300;
 
         void checkBsecStatus();

@@ -65,15 +65,17 @@ namespace psyduck
 
     Logger::Logger(const char *sourcePrefix, char *sourcePostfix)
     {
-      this->source = new char[strlen(sourcePrefix) + strlen(sourcePostfix) + 1];
+      this->source = new char[strlen(sourcePrefix) + strlen(sourcePostfix) + 2];
       strcpy(this->source, sourcePrefix);
+      strcat(this->source, ":");
       strcat(this->source, sourcePostfix);
     }
 
     Logger::Logger(const char *sourcePrefix, const char *sourcePostfix)
     {
-      this->source = new char[strlen(sourcePrefix) + strlen(sourcePostfix) + 1];
+      this->source = new char[strlen(sourcePrefix) + strlen(sourcePostfix) + 2];
       strcpy(this->source, sourcePrefix);
+      strcat(this->source, ":");
       strcat(this->source, sourcePostfix);
     }
 
@@ -104,6 +106,7 @@ namespace psyduck
     LOG_FNS_FOR_LEVEL(LogLevel::LOG_LEVEL_WARN, warn);
     LOG_FNS_FOR_LEVEL(LogLevel::LOG_LEVEL_INFO, info);
     LOG_FNS_FOR_LEVEL(LogLevel::LOG_LEVEL_DEBUG, debug);
+    LOG_FNS_FOR_LEVEL(LogLevel::LOG_LEVEL_TRACE, trace);
 
     void Logger::setLogLevel(LogLevel logLevel)
     {

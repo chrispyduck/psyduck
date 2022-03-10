@@ -1,27 +1,39 @@
 #include "ConnectionStatusLight.h"
 #include "Psyduck.h"
 
-namespace psyduck {
-  namespace base {
-    void ConnectionStatusLight::timerTick() {
-      ConnectionStatus currentStatus;
+namespace psyduck
+{
+  namespace base
+  {
+    void ConnectionStatusLight::timerTick()
+    {
       // check connection status and update if needed
-      if (!this->getWifiConnected()) {
-        currentStatus = STATUS_WIFI_DISCONNECTED;
-      } else if (!this->getMqttConnected()) {
-        currentStatus = STATUS_MQTT_DISCONNECTED;
-      } else {
-        currentStatus = STATUS_ONLINE;
-      }
+      if (this->lastStatus != STATUS_FAULT)
+      {
+        ConnectionStatus currentStatus;
+        if (!this->getWifiConnected())
+        {
+          currentStatus = STATUS_WIFI_DISCONNECTED;
+        }
+        else if (!this->getMqttConnected())
+        {
+          currentStatus = STATUS_MQTT_DISCONNECTED;
+        }
+        else
+        {
+          currentStatus = STATUS_ONLINE;
+        }
 
-      // status changed; update config
-      if (this->lastStatus != currentStatus) {
-        switch (currentStatus) {
-          case STATUS_UNKNOWN:
-            this->setAlwaysOff();
+        // status changed; update config
+        if (this->lastStatus != currentStatus)
+        {
+          switch (currentStatus)
+          {
+          case STATUS_FAULT:
+            this->setBlinkInterval(INTERVAL_FAULT);
             break;
 
-          case STATUS_WIFI_DISCONNECTED: 
+          case STATUS_WIFI_DISCONNECTED:
             this->setBlinkInterval(INTERVAL_WIFI_DISCONNECTED);
             break;
 
@@ -32,11 +44,18 @@ namespace psyduck {
           case STATUS_ONLINE:
             this->setAlwaysOn();
             break;
+          }
+          this->lastStatus = currentStatus;
         }
-        this->lastStatus = currentStatus;
       }
 
-      // call base method 
+      // call base method
+      StatusLight::timerTick();
+    }
+
+    void ConnectionStatusLight::activateFaultIndicator()
+    {
+      this->lastStatus = STATUS_FAULT;
       StatusLight::timerTick();
     }
   }

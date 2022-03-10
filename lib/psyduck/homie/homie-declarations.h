@@ -116,6 +116,7 @@ namespace psyduck
       static HomieProperty *percentage(HomieNode *node, const char *id, const char *name, float currentValue = 0, MessageReceivedCallback setter = nullptr);
       static HomieProperty *minutes(HomieNode *node, const char *id, const char *name, float currentValue = 0, MessageReceivedCallback setter = nullptr);
       static HomieProperty *boolean(HomieNode *node, const char *id, const char *name, bool currentValue = false, MessageReceivedCallback setter = nullptr);
+      static HomieProperty *counter(HomieNode *node, const char *id, const char *name, int currentValue = 0);
 
     private:
       const char *id = nullptr;

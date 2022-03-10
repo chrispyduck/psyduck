@@ -35,13 +35,15 @@ namespace psyduck
       void error(const __FlashStringHelper *format, ...);
       void debug(const char *format, ...);
       void debug(const __FlashStringHelper *format, ...);
+      void trace(const char *format, ...);
+      void trace(const __FlashStringHelper *format, ...);
 
       void setLogLevel(LogLevel logLevel);
 
     private:
       char *source = nullptr;
 
-      LogLevel logLevel = LogLevel::LOG_LEVEL_INFO;
+      LogLevel logLevel = LogLevel::LOG_LEVEL_TRACE;
 
       void writePrefix(LogLevel level);
       void writePostfix();

@@ -10,7 +10,7 @@ namespace psyduck
   {
     enum ConnectionStatus
     {
-      STATUS_UNKNOWN = 0,
+      STATUS_FAULT = 0,
       STATUS_WIFI_DISCONNECTED = 1,
       STATUS_MQTT_DISCONNECTED = 2,
       STATUS_ONLINE = 3
@@ -29,9 +29,12 @@ namespace psyduck
         this->setBlinkInterval(INTERVAL_WIFI_DISCONNECTED);
       };
 
+      void activateFaultIndicator();
+
     private:
       const int INTERVAL_WIFI_DISCONNECTED = 1500;
       const int INTERVAL_MQTT_DISCONNECTED = 500;
+      const int INTERVAL_FAULT = 3000;
 
       std::function<bool()> getWifiConnected;
       std::function<bool()> getMqttConnected;

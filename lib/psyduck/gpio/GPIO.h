@@ -19,11 +19,19 @@ namespace psyduck
       short pinOff;
     };
 
+    struct GpioState {
+      uint8_t ledcCounter = 0;
+    };
+
     class GPIO
     {
     public:
       static void setSwitch(GpioLatchingSwitch& config, bool desiredValue);
       static void setSwitch(GpioNonLatchingSwitch& config, bool desiredValue);
+      static uint8_t getNextLedcChannel();
+
+    private:
+      static GpioState state;
     };
   }
 }

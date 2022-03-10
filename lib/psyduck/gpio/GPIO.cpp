@@ -21,5 +21,12 @@ namespace psyduck
     {
       digitalWrite(config.pinOn, desiredValue ? HIGH : LOW);
     }
+
+    uint8_t GPIO::getNextLedcChannel()
+    {
+      return ++GPIO::state.ledcCounter;
+    }
+
+    GpioState GPIO::state;
   }
 }

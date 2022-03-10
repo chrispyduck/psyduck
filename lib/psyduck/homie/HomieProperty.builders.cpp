@@ -37,14 +37,23 @@ namespace psyduck
       return prop;
     }
 
-    HomieProperty* HomieProperty::minutes(HomieNode *node, const char *id, const char *name, float currentValue, MessageReceivedCallback setter) {
+    HomieProperty *HomieProperty::minutes(HomieNode *node, const char *id, const char *name, float currentValue, MessageReceivedCallback setter)
+    {
       auto prop = build(node, id, name, "float", "Minutes", nullptr, setter);
       prop->setValue(currentValue);
       return prop;
     }
 
-    HomieProperty* HomieProperty::boolean(HomieNode *node, const char *id, const char *name, bool currentValue, MessageReceivedCallback setter) {
-      auto prop = build(node, id, name, "boolean", nullptr, nullptr, nullptr);
+    HomieProperty *HomieProperty::boolean(HomieNode *node, const char *id, const char *name, bool currentValue, MessageReceivedCallback setter)
+    {
+      auto prop = build(node, id, name, "boolean", nullptr, nullptr, setter);
+      prop->setValue(currentValue);
+      return prop;
+    }
+
+    HomieProperty *HomieProperty::counter(HomieNode *node, const char *id, const char *name, int currentValue)
+    {
+      auto prop = build(node, id, name, "integer", nullptr, nullptr, nullptr);
       prop->setValue(currentValue);
       return prop;
     }

@@ -13,7 +13,8 @@ namespace
   }
 }
 
-void onConnectionEstablished() {
+void onConnectionEstablished()
+{
   Serial.write("ERROR: global onConnectionEstablished called. this should not happen.");
   throw std::exception();
 }
@@ -81,7 +82,8 @@ namespace psyduck
     return this->mqttClient;
   }
 
-  void Psyduck::setDebug(bool enabled) {
+  void Psyduck::setDebug(bool enabled)
+  {
     this->mqttClient->enableDebuggingMessages(enabled);
   }
 
@@ -96,6 +98,11 @@ namespace psyduck
 
   void Psyduck::loop()
   {
+    if (this->isFaulted)
+    {
+      return;
+    }
+
     this->mqttClient->loop();
     Timers::tick();
   }
@@ -103,8 +110,20 @@ namespace psyduck
   void Psyduck::setConnectionStatusLight(byte ledPin)
   {
     this->connectionStatusLight = new ConnectionStatusLight(
-      ledPin, 
-      std::bind(&EspMQTTClient::isWifiConnected, this->mqttClient),
-      std::bind(&EspMQTTClient::isMqttConnected, this->mqttClient));
+        ledPin,
+        std::bind(&EspMQTTClient::isWifiConnected, this->mqttClient),
+        std::bind(&EspMQTTClient::isMqttConnected, this->mqttClient));
+  }
+
+  void Psyduck::activateFaultState()
+  {
+    this->isFaulted = true;
+    this->logger->error("Fault state activated. Processing halted. Restarting in 30 seconds.");
+    if (this->connectionStatusLight != nullptr)
+    {
+      this->connectionStatusLight->activateFaultIndicator();
+    }
+    delay(30000);
+    ESP.restart();
   }
 }

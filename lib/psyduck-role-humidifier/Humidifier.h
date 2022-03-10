@@ -18,18 +18,18 @@ namespace psyduck
       struct HumidifierHardwareConfiguration
       {
         byte fanPwmPin;
-        byte atomizerRelayPin;
+        byte atomizerPwmPin;
         byte waterLevelLowSensorPin;
         byte waterValveOpenPin;
         long checkInterval = 1000;
       };
 
+      
+
       struct HumidifierGpioState
       {
-        byte fanDutyCycle;
-        bool fanIsHigh;
-
-        bool atomizerRelayActive;
+        DutyCycleOutput fan;
+        DutyCycleOutput atomizer;
 
         bool waterLevelLowSensor;
         bool waterValveOpen;
@@ -63,13 +63,9 @@ namespace psyduck
 
         HomieNode *stateNode = nullptr;
         HomieProperty *currentFanDutyCycleProperty = nullptr;
-        HomieProperty *currentAtomizerPowerStateProperty = nullptr;
         HomieProperty *currentAtomizerDutyCycleProperty = nullptr;
         HomieProperty *currentWaterValveStatusProperty = nullptr;
         HomieProperty *currentWaterLevelLowProperty = nullptr;
-
-        long lastAtomizerOff = 0;
-        long lastAtomizerOn = 0;
 
         void checkWaterValve();
         void checkFanSpeed();
@@ -78,7 +74,9 @@ namespace psyduck
         float computeAtomizerDutyCycle();
         bool shouldWaterValveBeOpen();
 
-        static bool timerTick(void*);
+        static bool timerTick(void *);
+
+        long lastAtomizerActive = 0;
       };
 
     }
