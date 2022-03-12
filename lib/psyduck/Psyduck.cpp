@@ -107,7 +107,7 @@ namespace psyduck
     Timers::tick();
   }
 
-  void Psyduck::setConnectionStatusLight(byte ledPin)
+  void Psyduck::setConnectionStatusLight(GpioPinId ledPin)
   {
     this->connectionStatusLight = new ConnectionStatusLight(
         ledPin,

@@ -6,7 +6,7 @@ namespace psyduck
 {
   namespace gpio
   {
-    void DutyCycleOutput::init(uint8_t pin)
+    void DutyCycleOutput::init(GpioPinId pin)
     {
       if (this->pin != UINT8_MAX) {
         throw std::exception();

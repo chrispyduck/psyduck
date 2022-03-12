@@ -9,19 +9,23 @@ namespace psyduck
 {
   namespace gpio
   {
+    typedef uint8_t GpioPinId;
+
     struct GpioNonLatchingSwitch
     {
-      short pinOn;
+      GpioPinId pinOn;
     };
     struct GpioLatchingSwitch
     {
-      short pinOn;
-      short pinOff;
+      GpioPinId pinOn;
+      GpioPinId pinOff;
     };
 
     struct GpioState {
       uint8_t ledcCounter = 0;
     };
+
+    
 
     class GPIO
     {

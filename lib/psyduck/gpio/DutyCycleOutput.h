@@ -1,5 +1,6 @@
 #pragma once
 #include "DutyCycle.h"
+#include "GPIO.h"
 #include "../base/psyduck-base.h"
 
 namespace psyduck
@@ -9,7 +10,7 @@ namespace psyduck
     class DutyCycleOutput : public DutyCycle
     {
     public:
-      void init(uint8_t pin);
+      void init(GpioPinId pin);
 
     protected:
       psyduck::base::Logger* logger;
@@ -17,7 +18,7 @@ namespace psyduck
       virtual void onSet() override;
 
     private:
-      uint8_t pin = UINT8_MAX;
+      GpioPinId pin = UINT8_MAX;
       uint8_t ledcChannel = UINT8_MAX;
 
       void assertInitialized();

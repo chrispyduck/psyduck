@@ -6,6 +6,11 @@ namespace psyduck
   {
     namespace humidifier
     {
+      HumidifierSettings::HumidifierSettings()
+      {
+        this->init("humidifier");
+      }
+
       float HumidifierSettings::getDesiredHumidity()
       {
         return this->data->desiredHumidity;

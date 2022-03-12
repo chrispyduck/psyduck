@@ -60,7 +60,7 @@ namespace psyduck
         this->initBsecSettings();
       }
 
-      BsecSensor::BsecSensor(Psyduck *psyduck, SPIClass &spiBus, byte chipSelectPin)
+      BsecSensor::BsecSensor(Psyduck *psyduck, SPIClass &spiBus, GpioPinId chipSelectPin)
       {
         this->initCommon();
         this->initHomie(psyduck);
@@ -121,7 +121,7 @@ namespace psyduck
         this->checkBsecStatus();
       }
 
-      void BsecSensor::initBsecHardware(SPIClass &spiBus, byte chipSelectPin)
+      void BsecSensor::initBsecHardware(SPIClass &spiBus, GpioPinId chipSelectPin)
       {
         spiBus.begin();
         this->bsec.begin(chipSelectPin, spiBus);
@@ -139,6 +139,7 @@ namespace psyduck
         this->bsec.setConfig(bsec_config_iaq);
         this->checkBsecStatus();
 
+        this->settings.load();
         uint8_t *defaultState = new uint8_t[BSEC_MAX_STATE_BLOB_SIZE];
         this->bsec.getState(defaultState);
         uint8_t *state = this->settings.getBsecState();
@@ -157,15 +158,21 @@ namespace psyduck
         this->checkBsecStatus();
       }
 
-      IRAM_ATTR void BsecSensor::read()
+      void BsecSensor::read()
       {
         if (!this->bsec.run())
         {
-          this->logger->debug("Read failed");
+          this->failedReads++;
+          if (this->failedReads >= 10) {
+            this->logger->error("Resetting due to 10 consecutive read failures");
+            ESP.restart();
+          }
+          this->logger->debug("Read failed (%i consecutive)", this->failedReads);
           this->checkBsecStatus();
         }
         else
         {
+          this->failedReads = 0;
           // read successful; print info
           this->logger->info("ts=%d: temp=%.1FC %.1FF, raw temp=%.1FC %.1FF, hum=%.1F, raw hum=%.1F, pres=%.0F, staticIaq=%.0F (acc=%d), co2=%.0F (acc=%d), bvoc=%.3F (acc=%d)",
                              this->bsec.outputTimestamp,
@@ -183,7 +190,8 @@ namespace psyduck
                              this->bsec.breathVocEquivalent,
                              this->bsec.breathVocAccuracy);
 
-          if ((this->maxAccuracy < this->bsec.staticIaqAccuracy) || ((millis() - this->lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES))
+          if ((this->maxAccuracy < this->bsec.staticIaqAccuracy) 
+            || ((millis() - this->lastSave) / 60000 > SENSOR_STATE_SAVE_INTERVAL_MINUTES))
           {
             this->logger->info("Saving BSEC algorithm state");
             uint8_t *state = settings.getBsecState();

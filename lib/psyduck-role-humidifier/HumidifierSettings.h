@@ -11,7 +11,7 @@ namespace psyduck
   {
     namespace humidifier
     {
-      struct HumidifierSettingsData
+      struct __attribute__((packed)) HumidifierSettingsData
       {
         char header[6];
 
@@ -26,6 +26,8 @@ namespace psyduck
       class HumidifierSettings : public SettingsInstance<HumidifierSettingsData>
       {
       public:
+        HumidifierSettings();
+        
         float getDesiredHumidity();
         float setDesiredHumidity(float value);
 

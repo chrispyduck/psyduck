@@ -11,7 +11,7 @@ namespace psyduck
   {
     namespace thermostat
     {
-      struct ThermostatSettingsData
+      struct __attribute__((packed)) ThermostatSettingsData
       {
         char header[6];
 
@@ -26,6 +26,8 @@ namespace psyduck
       class ThermostatSettings : public SettingsInstance<ThermostatSettingsData>
       {
       public:
+        ThermostatSettings();
+
         float getSetPoint();
         float setSetPoint(float value);
 

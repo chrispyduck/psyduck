@@ -6,6 +6,11 @@ namespace psyduck
   {
     namespace thermostat
     {
+      ThermostatSettings::ThermostatSettings()
+      {
+        this->init("thermostat");
+      }
+
       float ThermostatSettings::getSetPoint()
       {
         return this->data->setPoint;

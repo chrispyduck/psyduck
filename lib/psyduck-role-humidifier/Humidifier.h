@@ -17,10 +17,11 @@ namespace psyduck
     {
       struct HumidifierHardwareConfiguration
       {
-        byte fanPwmPin;
-        byte atomizerPwmPin;
-        byte waterLevelLowSensorPin;
-        byte waterValveOpenPin;
+        GpioPinId fanPwmPin;
+        GpioPinId atomizerPwmPin;
+        GpioPinId waterLevelLowSensorPin;
+        GpioPinId waterValveOpenPin;
+        GpioPinId hvacFanOnPin;
         long checkInterval = 1000;
       };
 

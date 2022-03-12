@@ -26,8 +26,6 @@ namespace psyduck
         this->sensor = sensor;
         this->hardwareConfiguration = hardwareConfiguration;
 
-        this->settings.load();
-
         pinMode(hardwareConfiguration.waterLevelLowSensorPin, INPUT_PULLDOWN);
 
         pinMode(hardwareConfiguration.waterValveOpenPin, OUTPUT);

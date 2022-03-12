@@ -16,6 +16,11 @@ namespace psyduck
         }
       }
 
+      BsecSettings::BsecSettings() 
+      {
+        this->init("bsec");
+      }
+
       uint8_t *BsecSettings::getBsecState()
       {
         return this->data.bsecState;

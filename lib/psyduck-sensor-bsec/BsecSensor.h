@@ -10,6 +10,7 @@
 using psyduck::Psyduck;
 using psyduck::base::Logger;
 using psyduck::sensors::ITemperatureAndHumidity;
+using psyduck::gpio::GpioPinId;
 using namespace psyduck::homie;
 
 namespace psyduck
@@ -22,7 +23,7 @@ namespace psyduck
       {
       public:
         BsecSensor(Psyduck *psyduck, TwoWire& i2cBus);
-        BsecSensor(Psyduck *psyduck, SPIClass& spiBus, byte chipSelectPin);
+        BsecSensor(Psyduck *psyduck, SPIClass& spiBus, GpioPinId chipSelectPin);
 
         float getTemperature() override;
         float getHumidity() override;
@@ -35,16 +36,17 @@ namespace psyduck
         void initHomie(Psyduck *psyduck);
         void initBsecSettings();
         void initBsecHardware(TwoWire& i2cBus);
-        void initBsecHardware(SPIClass& spiBus, byte chipSelectPin);
+        void initBsecHardware(SPIClass& spiBus, GpioPinId chipSelectPin);
 
         Bsec bsec;
         Logger *logger = nullptr;
         short maxAccuracy = 0;
         unsigned long lastSave = 0;
         bool ready = false;
+        byte failedReads = 0;
 
         const int SENSOR_READ_INTERVAL = 3000;
-        const int SENSOR_STATE_SAVE_INTERVAL_MINUTES = 300;
+        const int SENSOR_STATE_SAVE_INTERVAL_MINUTES = 1;
 
         void checkBsecStatus();
 

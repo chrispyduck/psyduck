@@ -12,7 +12,7 @@ namespace psyduck
   {
     namespace bsec
     {
-      struct BsecData
+      struct __attribute__((packed)) BsecData
       {
         BsecData();
 
@@ -22,6 +22,7 @@ namespace psyduck
       class BsecSettings : public SettingsInstance<BsecData>
       {
       public:
+        BsecSettings();
         uint8_t *getBsecState();
 
       private:

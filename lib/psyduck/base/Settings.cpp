@@ -12,24 +12,36 @@ namespace psyduck
 {
   namespace base
   {
+    Preferences Settings::preferences;
+
     void Settings::commit()
     {
-      if (commitHoldTimer != 0) {
+#ifdef SETTINGS_USE_EEPROM
+      if (commitHoldTimer != 0)
+      {
         Timers::cancel(commitHoldTimer);
       }
       logger.debug("Committing all settings to EEPROM");
-      EEPROM.commit();
+      if (!EEPROM.commit())
+      {
+        logger.warn("Failed to commit settings to EEPROM");
+      }
+#endif
     }
 
     void Settings::markDirty()
     {
-      if (commitHoldTimer != 0) {
+#ifdef SETTINGS_USE_EEPROM
+      if (commitHoldTimer != 0)
+      {
         Timers::cancel(commitHoldTimer);
       }
       commitHoldTimer = Timers::in(3000, autoCommitHoldTimerElapsed);
+#endif
     }
 
-    bool Settings::autoCommitHoldTimerElapsed(void*) {
+    bool Settings::autoCommitHoldTimerElapsed(void *)
+    {
       Settings::commit();
       return false;
     }
