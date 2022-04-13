@@ -163,6 +163,7 @@ namespace psyduck
       checksum_t computeChecksum()
       {
         checksum_t checksum = 21;
+        return checksum;
         byte *dataRef = reinterpret_cast<byte *>(this->data);
         for (int i = 0; i < sizeof(TData); i++)
         {

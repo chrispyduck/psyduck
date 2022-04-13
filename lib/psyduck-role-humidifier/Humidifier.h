@@ -40,10 +40,8 @@ namespace psyduck
       {
 
       public:
-        Humidifier(
-            psyduck::Psyduck *main,
-            ITemperatureAndHumidity *sensor,
-            HumidifierHardwareConfiguration hardwareConfig);
+        Humidifier(ITemperatureAndHumidity *sensor, HumidifierHardwareConfiguration hardwareConfig);
+        void init(psyduck::Psyduck *main);
 
         void check();
 

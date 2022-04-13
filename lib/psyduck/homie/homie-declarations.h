@@ -100,6 +100,7 @@ namespace psyduck
       void setValue(String *value);
       void setValue(int value);
       void setValue(float value, uint8_t precision = 1);
+      void setValue(double value, uint8_t precision = 1);
       void setValue(char *value);
       void setValue(const char *value);
       void setValue(bool value);

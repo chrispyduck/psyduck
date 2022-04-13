@@ -11,6 +11,10 @@ namespace
   const short ATOMIZER_PWM_CHANNEL = 1;
 }
 
+#define HUMIDIFIER_ENABLE_GPIO_RAW true
+#define HUMIDIFIER_ENABLE_HOMIE true
+#define HUMIDIFIER_ENABLE_GPIO_PWM true
+
 namespace psyduck
 {
   namespace roles
@@ -18,24 +22,33 @@ namespace psyduck
     namespace humidifier
     {
       Humidifier::Humidifier(
-          psyduck::Psyduck *main,
           ITemperatureAndHumidity *sensor,
           HumidifierHardwareConfiguration hardwareConfiguration)
       {
         this->logger = new Logger(__FILE__);
         this->sensor = sensor;
         this->hardwareConfiguration = hardwareConfiguration;
+      }
 
+      void Humidifier::init(psyduck::Psyduck *main)
+      {
+#if HUMIDIFIER_ENABLE_GPIO_RAW
+        this->logger->trace("Initializing raw GPIO pins");
         pinMode(hardwareConfiguration.waterLevelLowSensorPin, INPUT_PULLDOWN);
-
         pinMode(hardwareConfiguration.waterValveOpenPin, OUTPUT);
         digitalWrite(hardwareConfiguration.waterValveOpenPin, LOW);
-
-        this->gpioState.atomizer.init(hardwareConfiguration.atomizerPwmPin);
-        this->gpioState.fan.init(hardwareConfiguration.fanPwmPin);
         this->gpioState.waterLevelLowSensor = false;
         this->gpioState.waterValveOpen = false;
+#endif
 
+#if HUMIDIFIER_ENABLE_GPIO_PWM
+        this->logger->trace("Initializing duty cycle pins");
+        this->gpioState.atomizer.init(hardwareConfiguration.atomizerPwmPin, 50, "atomizer");
+        this->gpioState.fan.init(hardwareConfiguration.fanPwmPin, 50, "fan");
+#endif
+
+#if HUMIDIFIER_ENABLE_HOMIE
+        this->logger->trace("Initializing Homie members");
         this->configNode = new HomieNode(main->getHomieDevice(), "humidifierConfig", "Humidifier Configuration", "humidifierConfig");
 
         this->configDesiredHumidityProperty = HomieProperty::percentage(
@@ -129,7 +142,9 @@ namespace psyduck
             "waterLevelLow",
             "Water Level Low",
             true);
+#endif
 
+        this->logger->trace("Starting timer");
         Timers::every(this->hardwareConfiguration.checkInterval, Humidifier::timerTick, this);
       }
 
@@ -149,6 +164,7 @@ namespace psyduck
 
       void Humidifier::checkWaterValve()
       {
+#if HUMIDIFIER_ENABLE_GPIO_RAW
         bool isOpen = this->gpioState.waterValveOpen;
         bool shouldBeOpen = this->shouldWaterValveBeOpen();
         if (isOpen == shouldBeOpen)
@@ -167,22 +183,24 @@ namespace psyduck
           this->currentWaterValveStatusProperty->setValue(true);
           this->gpioState.waterValveOpen = true;
         }
+#endif
       }
 
       void Humidifier::checkFanSpeed()
       {
+#if HUMIDIFIER_ENABLE_GPIO_PWM
         // ideal fan speed matches atomizer speed
-        float atomizerDutyCycle = this->gpioState.atomizer.getFloat();
+        double atomizerDutyCycle = this->gpioState.atomizer.getDecimal();
 
         // shift fan speed to agree with configured range
         // don't turn fan off until 5 minutes after atomizer off
-        float max = this->settings.getFanHighDutyCycle();
-        float min = this->settings.getFanIdleDutyCycle();
-        float newFanDutyCycle = (atomizerDutyCycle == 0 && (millis() - this->lastAtomizerActive) > 300000)
-                                    ? 0
-                                    : ((max - min) * atomizerDutyCycle) + min;
-        float previousFanDutyCycle = this->gpioState.fan.getFloat();
-        if (abs(previousFanDutyCycle - newFanDutyCycle) > 0.005)
+        double max = this->settings.getFanHighDutyCycle();
+        double min = this->settings.getFanIdleDutyCycle();
+        double newFanDutyCycle = (atomizerDutyCycle == 0 && (millis() - this->lastAtomizerActive) > 300000)
+                                     ? 0
+                                     : ((max - min) * atomizerDutyCycle) + min;
+        double previousFanDutyCycle = this->gpioState.fan.getDecimal();
+        if (abs(previousFanDutyCycle - newFanDutyCycle) > 0.007)
         {
           this->logger->debug("Computed fan duty cycle of %.3f (%+.3f)",
                               newFanDutyCycle,
@@ -190,13 +208,15 @@ namespace psyduck
           this->gpioState.fan.set(newFanDutyCycle);
           this->currentFanDutyCycleProperty->setValue(newFanDutyCycle * 100);
         }
+#endif
       }
 
       void Humidifier::checkAtomizer()
       {
-        auto previousDutyCycle = this->gpioState.atomizer.getFloat();
+#if HUMIDIFIER_ENABLE_GPIO_PWM
+        auto previousDutyCycle = this->gpioState.atomizer.getDecimal();
         auto newDutyCycle = this->computeAtomizerDutyCycle();
-        if (abs(previousDutyCycle - newDutyCycle) > 0.005)
+        if (abs(previousDutyCycle - newDutyCycle) > 0.007)
         {
           this->logger->debug("Computed atomizer duty cycle of %.3f (RH=%.1f, %+.3f)",
                               newDutyCycle,
@@ -207,10 +227,12 @@ namespace psyduck
         }
         if (newDutyCycle > 0)
           this->lastAtomizerActive = millis();
+#endif
       }
 
       bool Humidifier::shouldWaterValveBeOpen()
       {
+#if HUMIDIFIER_ENABLE_GPIO_RAW
         bool previousValue = this->gpioState.waterLevelLowSensor;
         bool newValue = digitalRead(this->hardwareConfiguration.waterLevelLowSensorPin) == HIGH;
 
@@ -225,10 +247,14 @@ namespace psyduck
           return false;
 
         return this->gpioState.waterLevelLowSensor;
+#else
+        return false;
+#endif
       }
 
       float Humidifier::computeAtomizerDutyCycle()
       {
+#if HUMIDIFIER_ENABLE_GPIO_PWM
         // sanity check humidity value
         auto currentHumidity = this->sensor->getHumidity();
         if (currentHumidity >= 100 || currentHumidity <= 0)
@@ -259,6 +285,9 @@ namespace psyduck
         auto atomizerMin = this->settings.getAtomizerMinDutyCycle();
         auto atomizerDutyCycle = ((1 - humidityFactor) * (atomizerMax - atomizerMin)) + atomizerMin;
         return atomizerDutyCycle;
+#else
+        return 0.0;
+#endif
       }
     }
   }

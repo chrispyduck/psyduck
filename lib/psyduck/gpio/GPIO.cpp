@@ -24,7 +24,7 @@ namespace psyduck
 
     uint8_t GPIO::getNextLedcChannel()
     {
-      return ++GPIO::state.ledcCounter;
+      return GPIO::state.ledcCounter++;
     }
 
     GpioState GPIO::state;

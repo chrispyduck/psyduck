@@ -10,7 +10,10 @@ namespace psyduck
     class DutyCycleOutput : public DutyCycle
     {
     public:
-      void init(GpioPinId pin);
+      void init(GpioPinId pin, double frequency = 5000, const char* name = nullptr);
+
+      // tests the full range of possible outputs from 0 to max over the specified time, then resets the value to 0
+      void test(int timeMs);
 
     protected:
       psyduck::base::Logger* logger;

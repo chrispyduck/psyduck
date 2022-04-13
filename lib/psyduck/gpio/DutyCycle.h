@@ -9,20 +9,20 @@ namespace psyduck
     {
     public:
       DutyCycle();
-      DutyCycle(float value);
-      DutyCycle(byte value);
+      DutyCycle(double value);
+      DutyCycle(uint32_t value);
 
-      float getFloat();
-      byte getByte();
-      void set(float value);
-      void set(byte value);
+      double getDecimal();
+      uint32_t getRaw();
+      void set(double value);
+      void set(uint32_t value);
 
     protected:
       virtual void onSet() { };
 
     private:
-      float floatValue;
-      byte byteValue;
+      double decimalValue;
+      uint32_t value;
     };
   }
 }

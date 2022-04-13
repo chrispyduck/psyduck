@@ -17,10 +17,10 @@ namespace psyduck
 
         float desiredHumidity = 45;
         float lowHumidity = 20;
-        float fanIdleDutyCycle = 0.3;
+        float fanIdleDutyCycle = 0.5;
         float fanHighDutyCycle = 1.0;
-        float atomizerMinDutyCycle = 0.0;
-        float atomizerMaxDutyCycle = 0.5;
+        float atomizerMinDutyCycle = 0.4;
+        float atomizerMaxDutyCycle = 1.0;
       };
 
       class HumidifierSettings : public SettingsInstance<HumidifierSettingsData>

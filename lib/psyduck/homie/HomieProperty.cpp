@@ -77,6 +77,11 @@ namespace psyduck
       this->setValue(new String(value, precision));
     }
 
+    void HomieProperty::setValue(double value, uint8_t precision)
+    {
+      this->setValue(new String(value, precision));
+    }
+
     void HomieProperty::setValue(int value)
     {
       this->setValue(new String(value));
