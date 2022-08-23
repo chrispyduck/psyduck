@@ -58,5 +58,10 @@ namespace psyduck
       this->lastStatus = STATUS_FAULT;
       StatusLight::timerTick();
     }
+
+    void ConnectionStatusLight::pulse()
+    {
+      StatusLight::pulse();
+    }
   }
 }

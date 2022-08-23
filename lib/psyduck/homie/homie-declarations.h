@@ -6,7 +6,6 @@
 #include <EspMQTTClient.h>
 #include "../base/psyduck-base.h"
 
-#define STATS_INTERVAL 30
 #define HOMIE_VERSION "3.0.0"
 #define HOMIE_PREFIX "homie"
 
@@ -37,7 +36,6 @@ namespace psyduck
       void setStatus(HomieDeviceStatus status);
       void setReady();
       void handleDisconnect();
-      void publishStats();
 
       LinkedList<HomieNode *> getNodes();
       char *getName();
@@ -52,13 +50,10 @@ namespace psyduck
       char *mqttPath = nullptr;
       EspMQTTClient *client = nullptr;
       LinkedList<HomieNode *> nodes;
-      Timers::Task statsTimer;
 
       Logger *logger = nullptr;
 
       void publishAttribute(const char *name, String value, bool retain = true);
-
-      static bool publishStatsTimerTick(void *);
     };
 
     class HomieNode
@@ -99,12 +94,14 @@ namespace psyduck
 
       void setValue(String *value);
       void setValue(int value);
+      void setValue(unsigned int value);
+      void setValue(long value);
+      void setValue(long unsigned int value);
       void setValue(float value, uint8_t precision = 1);
       void setValue(double value, uint8_t precision = 1);
       void setValue(char *value);
       void setValue(const char *value);
       void setValue(bool value);
-      const char *getValue();
 
       void setUnit(const char *value);
       const char *getUnit();
@@ -118,6 +115,15 @@ namespace psyduck
       static HomieProperty *minutes(HomieNode *node, const char *id, const char *name, float currentValue = 0, MessageReceivedCallback setter = nullptr);
       static HomieProperty *boolean(HomieNode *node, const char *id, const char *name, bool currentValue = false, MessageReceivedCallback setter = nullptr);
       static HomieProperty *counter(HomieNode *node, const char *id, const char *name, int currentValue = 0);
+
+      static HomieProperty *build(
+          HomieNode *node,
+          const char *id,
+          const char *name,
+          const char *type,
+          const char *unit = nullptr,
+          const char *format = nullptr,
+          MessageReceivedCallback setter = nullptr);
 
     private:
       const char *id = nullptr;
@@ -133,15 +139,6 @@ namespace psyduck
       char *setterTopic = nullptr;
 
       Logger *logger = nullptr;
-
-      static HomieProperty *build(
-          HomieNode *node,
-        const char *id,
-        const char *name,
-        const char *type,
-        const char *unit = nullptr,
-        const char *format = nullptr,
-        MessageReceivedCallback setter = nullptr);
 
     protected:
       void publishAttribute(const char *name, String value, bool retain = true);

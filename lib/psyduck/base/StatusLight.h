@@ -6,6 +6,8 @@
 namespace psyduck {
   namespace base {
 
+    const unsigned long PULSE_INTERVAL = 10; 
+
     enum StatusLightBehavior {
       STATUS_LIGHT_BEHAVIOR_STEADY = 0,
       STATUS_LIGHT_BEHAVIOR_BLINK = 1
@@ -18,6 +20,7 @@ namespace psyduck {
         void setBlinkInterval(unsigned long intervalMilliseconds);
         void setAlwaysOn();
         void setAlwaysOff();
+        void pulse();
 
         friend bool statusTimerTick(void*);
 
@@ -28,7 +31,7 @@ namespace psyduck {
         bool lightOn;
         int interval;
         int pin;
-        StatusLightBehavior behavior;       
+        StatusLightBehavior behavior;
         Timers::Task timer;
     };
   }

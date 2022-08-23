@@ -41,8 +41,6 @@ namespace psyduck
       this->publishAttribute("$fw/name", this->name);
       this->publishAttribute("$fw/version", "0.1");
       this->publishAttribute("$implementation", "arduino+esp");
-      this->publishAttribute("$stats", "uptime,rssi,connectionEstablishedCount,timerCount");
-      this->publishAttribute("$stats/interval", String(STATS_INTERVAL));
 
       char topic[strlen(name) + 7];
       strcpy(topic, this->mqttPath);
@@ -67,31 +65,9 @@ namespace psyduck
       this->publishAttribute("$nodes", nodeNames);
     }
 
-    bool HomieDevice::publishStatsTimerTick(void *deviceVoid)
-    {
-      HomieDevice *device = static_cast<HomieDevice *>(deviceVoid);
-      device->publishStats();
-      return true;
-    }
-
     void HomieDevice::setReady()
     {
       this->setStatus(HOMIE_DEVICE_READY);
-      this->statsTimer = Timers::every(STATS_INTERVAL * 1000, &publishStatsTimerTick, this);
-    }
-
-    void HomieDevice::handleDisconnect()
-    {
-      if (this->statsTimer != 0)
-        Timers::cancel(this->statsTimer);
-    }
-
-    void HomieDevice::publishStats()
-    {
-      this->publishAttribute("$stats/uptime", String(millis()), false);
-      this->publishAttribute("$stats/rssi", String(WiFi.RSSI()), false);
-      this->publishAttribute("$stats/connectionEstablishedCount", String(this->client->getConnectionEstablishedCount()), false);
-      this->publishAttribute("$stats/timerCount", String(Timers::size()), false);
     }
 
     void HomieDevice::setStatus(HomieDeviceStatus status)

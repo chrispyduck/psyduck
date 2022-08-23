@@ -1,6 +1,6 @@
 #include "DutyCycleOutput.h"
 #include "GPIO.h"
-#include <str.h>
+#include <string.h>
 #include "../base/psyduck-base.h"
 
 namespace psyduck

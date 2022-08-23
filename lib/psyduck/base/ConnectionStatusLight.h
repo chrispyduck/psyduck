@@ -30,6 +30,7 @@ namespace psyduck
       };
 
       void activateFaultIndicator();
+      void pulse();
 
     private:
       const int INTERVAL_WIFI_DISCONNECTED = 1500;

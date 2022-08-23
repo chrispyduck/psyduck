@@ -57,8 +57,7 @@ namespace psyduck
         this->getMqttClient()->subscribe(this->setterTopic, [this](const String &value)
                                          {
                                            this->logger->debug("Received set request on %s", this->setterTopic);
-                                           this->callback(value);
-                                         });
+                                           this->callback(value); });
       }
     }
 
@@ -74,15 +73,28 @@ namespace psyduck
 
     void HomieProperty::setValue(float value, uint8_t precision)
     {
-      this->setValue(new String(value, precision));
+      this->setValue(new String(value, (uint)precision));
     }
 
     void HomieProperty::setValue(double value, uint8_t precision)
     {
-      this->setValue(new String(value, precision));
+      this->setValue(new String(value, (uint)precision));
     }
 
     void HomieProperty::setValue(int value)
+    {
+      this->setValue(new String(value));
+    }
+
+    void HomieProperty::setValue(unsigned int value)
+    {
+      this->setValue(new String(value));
+    }
+    void HomieProperty::setValue(long value)
+    {
+      this->setValue(new String(value));
+    }
+    void HomieProperty::setValue(long unsigned int value)
     {
       this->setValue(new String(value));
     }
@@ -100,11 +112,6 @@ namespace psyduck
     void HomieProperty::setValue(const char *value)
     {
       this->setValue(new String(value));
-    }
-
-    const char *HomieProperty::getValue()
-    {
-      return this->value->c_str();
     }
 
     void HomieProperty::publishAttribute(const char *name, String value, bool retain)

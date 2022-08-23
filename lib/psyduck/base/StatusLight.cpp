@@ -53,6 +53,12 @@ namespace psyduck {
       }
     }
 
+    void StatusLight::pulse() {
+      digitalWrite(this->pin, this->lightOn ? LOW : HIGH);
+      delay(PULSE_INTERVAL);
+      digitalWrite(this->pin, this->lightOn ? HIGH : LOW);
+    }
+
     void StatusLight::timerTick() {
       bool newValue = !this->lightOn;
       if (newValue) {

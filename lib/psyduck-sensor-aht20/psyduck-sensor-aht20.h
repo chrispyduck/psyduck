@@ -16,6 +16,7 @@ namespace psyduck
         float getTemperature() override;
         float getHumidity() override;
 
+        bool isReady();
         void read();
 
         friend bool timerTick(void*);
@@ -34,7 +35,7 @@ namespace psyduck
         HomieProperty *temperatureProperty;
         HomieProperty *humidityProperty;
 
-        
+        bool ready;
 
         long int lastReport;
     };

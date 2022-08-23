@@ -269,7 +269,7 @@ namespace psyduck
         float humidityFactor;
         if (currentHumidity > setPoint)
         {
-          humidityFactor = 1;
+          return 0.0;
         }
         else if (currentHumidity < lowPoint)
         {

@@ -7,7 +7,6 @@ namespace psyduck
     bool timerTick(void *ref)
     {
       AHT20 *instance = reinterpret_cast<AHT20 *>(ref);
-      instance->logger->debug("timerTick");
       instance->read();
       return true;
     }
@@ -16,7 +15,7 @@ namespace psyduck
     {
       this->logger = new Logger(__FILE__);
       this->psyduck = psyduck;
-      if (!this->aht.begin())
+      if (!(this->ready = this->aht.begin()))
       {
         this->logger->error(F("Failed to locate AHTx0 on I2C bus"));
         // todo: move into fault state
@@ -31,7 +30,7 @@ namespace psyduck
       this->temp = 0;
       this->hum = 0;
 
-      auto task = Timers::every(10000, timerTick, this);
+      auto task = Timers::every(2000, timerTick, this);
       this->logger->debug("timer task: %d", task);
 
       this->node = new HomieNode(psyduck->getHomieDevice(), "environment", "Environment", "environment");
@@ -43,6 +42,10 @@ namespace psyduck
       this->humidityProperty = new HomieProperty(this->node, "humidity", "Humidity", "float");
       this->humidityProperty->setUnit("%");
       this->humidityProperty->setFormat("0:100");
+    }
+
+    bool AHT20::isReady() {
+      return this->ready;
     }
 
     void AHT20::read()
@@ -59,18 +62,23 @@ namespace psyduck
       this->logger->info(F("temp = %f, hum = %f"),
                          this->temp,
                          this->hum);
+      
+      auto indicator = this->psyduck->getConnectionStatusLight();
+      if (indicator != nullptr) 
+      {
+        indicator->pulse();
+      }
 
       if (millis() - this->lastReport > 30000)
       {
-
         this->lastReport = millis();
         if (this->temp > -40 && this->temp < 85)
-          this->temperatureProperty->setValue(this->temp, 1);
+          this->temperatureProperty->setValue(this->temp, 2);
         if (this->hum > 0 && this->hum < 100)
-          this->humidityProperty->setValue(this->hum, 0);
-        this->logger->info(F("temp = %s, hum = %s"),
-                           this->temperatureProperty->getValue(),
-                           this->humidityProperty->getValue());
+          this->humidityProperty->setValue(this->hum, 2);
+        this->logger->info(F("temp = %.2f, hum = %.2f"),
+                           this->temp,
+                           this->hum);
       }
     }
 

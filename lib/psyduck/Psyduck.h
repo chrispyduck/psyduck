@@ -13,6 +13,8 @@
 #include "sensor-interfaces/psyduck-sensor-interfaces.h"
 #include "gpio/psyduck-gpio.h"
 
+#define STATS_INTERVAL 30
+
 using namespace psyduck::homie;
 using namespace psyduck::sensors;
 using psyduck::base::ConnectionStatusLight;
@@ -41,6 +43,8 @@ namespace psyduck
     PsyduckConfigMqtt mqtt;
     char *deviceId = nullptr;
     char *deviceName = nullptr;
+    const char *otaPassword = nullptr;
+    uint16_t otaPort = 0;
   };
 
   class Psyduck
@@ -62,6 +66,7 @@ namespace psyduck
     void onConnectionEstablished();
 
     void setConnectionStatusLight(GpioPinId ledPin);
+    ConnectionStatusLight* getConnectionStatusLight();
 
     void setDebug(bool enabled);
 
@@ -72,6 +77,22 @@ namespace psyduck
     HomieDevice *homieDevice = nullptr;
     PsyduckConfig config;
     bool isFaulted = false;
+
+    Timers::Task statsTimer;
+    HomieNode *stats = nullptr;
+    HomieProperty *wifiChannelProperty = nullptr;
+    HomieProperty *uptimeProperty = nullptr;
+    HomieProperty *rssiProperty = nullptr;
+    HomieProperty *connectionEstablishedCountProperty = nullptr;
+    HomieProperty *timerCountProperty = nullptr;
+    HomieProperty *currentFreeHeap = nullptr;
+    HomieProperty *minFreeHeap = nullptr;
+    HomieProperty *lastResetReason = nullptr;
+    
+    HomieProperty *chipInfo = nullptr;
+
+    static bool publishStatsTimerTick(void *);
+    void publishStats();
   };
 }
 
